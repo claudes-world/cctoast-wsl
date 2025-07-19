@@ -19,11 +19,11 @@ The user can either set the project up globally or locally (within a project fol
 
 When setting globally, we create a folder in the user's home directory:
 
-~/.claude/cctoast-wsl/
+`~/.claude/cctoast-wsl/`
 
 When setting locally, we create a folder in the project root:
 
-.claude/cctoast-wsl/
+`.claude/cctoast-wsl/`
 
 We will give the user the option to add a hook for:
 - **Notifications**: Triggered when claude code is waiting for user response for an approval request.
@@ -39,7 +39,7 @@ Default is to:
 
 
 
-When installing either hook globally, we update ~/.claude/settings.json to add the hook. When installing locally, we give the option to sync the hook (not recommended), then either update .claude/settings.local.json or .claude/settings.json - creating the file if it doesn't exist.
+When installing either hook globally, we update `~/.claude/settings.json` to add the hook. When installing locally, we give the option to sync the hook (not recommended), then either update `.claude/settings.local.json` or `.claude/settings.json` - creating the file if it doesn't exist.
 
 The process of adding the hook is merging a new command into the user's claude code settings.json
 
@@ -130,5 +130,6 @@ or we could also just run a bash script that calls powershell using the command 
 > need to verify that the user has the claude code installed.
 > after installing the hooks, user needs to restart claude code.
 
+---
 
-anyway, these are just all my initial ideas for what I wanted to create. can you please help me flesh out the complete project spec?
+anyway, these are just all my initial ideas for what I wanted to create. can you please help me flesh out the full idea (for this **basic** project) and then create a complete project spec?
