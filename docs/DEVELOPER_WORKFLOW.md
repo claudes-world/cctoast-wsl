@@ -428,6 +428,221 @@ Brief description of changes
 3. Resolve all conversations
 4. Squash and merge preferred
 
+## CI/CD Pipeline & Testing
+
+### Automated Testing Infrastructure
+
+cctoast-wsl uses a comprehensive CI/CD pipeline with automated testing, building, and publishing. Here's how to work with it effectively:
+
+#### Test Framework (Vitest)
+```bash
+# Run all tests
+npm test
+
+# Run with coverage (90% threshold required)
+npm run test:coverage
+
+# Run tests in watch mode during development
+npm run test:watch
+
+# Run only shell script tests
+npm run test:shell
+
+# Run specific test files
+npm test -- __tests__/unit/cli.test.ts
+```
+
+#### Coverage Requirements
+The project enforces strict coverage thresholds:
+- **Lines**: 90% minimum
+- **Branches**: 85% minimum  
+- **Functions**: 90% minimum
+- **Statements**: 90% minimum
+
+CI will fail if coverage drops below these thresholds.
+
+#### Local CI Testing with Act
+
+You can test CI workflows locally using [nektos/act](https://github.com/nektos/act):
+
+```bash
+# Install act (if not available)
+# Follow: https://github.com/nektos/act#installation
+
+# List available workflows
+act -l
+
+# Dry run the main CI workflow (validates without execution)
+act -j test --dryrun
+
+# Run the full CI test job locally
+act -j test
+
+# Run with specific platform
+act -j test -P ubuntu-latest=catthehacker/ubuntu:act-latest
+
+# Run only the benchmarking job
+act -j benchmark
+```
+
+**Benefits of Local Testing:**
+- ✅ Validate workflow syntax before pushing
+- ✅ Test matrix configurations (Ubuntu 18/20, Windows 20)
+- ✅ Verify dependency installation and caching
+- ✅ Check coverage enforcement logic
+- ✅ Test build verification and performance benchmarks
+- ✅ Validate Windows PowerShell mocking strategy
+
+#### CI Workflow Matrix
+The CI runs on multiple environments:
+```yaml
+strategy:
+  matrix:
+    os: [ubuntu-latest, windows-latest]
+    node-version: [18.x, 20.x]
+    exclude:
+      # Windows only tested on Node 20 per PRD
+      - os: windows-latest
+        node-version: 18.x
+```
+
+#### Windows CI Mocking Strategy
+For Windows CI, BurntToast is mocked to avoid actual PowerShell module installation:
+- Environment variable `CI=true` enables mocking
+- PowerShell calls return simulated success responses
+- Path conversion logic tested without actual Windows calls
+- Mock scripts validate command generation accuracy
+
+#### Performance Benchmarking
+CI includes automated performance validation:
+```bash
+# Build time must be <1 second (target from PRD)
+npm run build:prod
+
+# CLI startup time measured (<100ms target)
+time ./bin/cctoast-wsl --help
+
+# Bundle size verified (<100KB target - currently ~26KB)
+```
+
+### Release Automation
+
+#### Conventional Commits
+Use conventional commits for automatic versioning:
+```bash
+# Feature (minor version bump)
+git commit -m "feat: add new CLI flag for timeout"
+
+# Bug fix (patch version bump)  
+git commit -m "fix: resolve PowerShell escaping issue"
+
+# Breaking change (major version bump)
+git commit -m "feat!: change default installation location"
+
+# Documentation (no version bump)
+git commit -m "docs: update installation guide"
+
+# CI improvements (no version bump)
+git commit -m "ci: optimize workflow caching"
+```
+
+#### Automated Release Process
+1. **Push to main** → Release Please analyzes commits
+2. **Release PR created** → Automatically generated with changelog
+3. **PR auto-merged** → When all checks pass
+4. **Tagged release** → Triggers publish workflow
+5. **npm published** → With provenance and SLSA-3 attestation
+6. **GitHub release** → With artifacts and checksums
+
+#### Manual Release Management
+```bash
+# View release-please PRs
+gh pr list --author "github-actions[bot]"
+
+# Check release workflow status
+gh run list --workflow=release.yml
+
+# View latest release info
+gh release view --json tagName,publishedAt,assets
+
+# Download release artifacts for verification
+gh release download v1.0.0
+```
+
+### Quality Gates
+
+All PRs and releases must pass:
+- ✅ **TypeScript compilation** without errors
+- ✅ **ESLint rules** with zero warnings  
+- ✅ **ShellCheck validation** for bash scripts
+- ✅ **Test suite** with 90% coverage minimum
+- ✅ **Build verification** with <100KB bundle target
+- ✅ **Performance benchmarks** within PRD targets
+- ✅ **Security audit** passing all checks
+
+### Troubleshooting CI Issues
+
+#### Coverage Failures
+```bash
+# Generate detailed coverage report
+npm run test:coverage
+
+# Check which files need more tests
+open coverage/index.html
+
+# Test specific modules to improve coverage
+npm test -- __tests__/unit/settings-merger.test.ts
+```
+
+#### Build Failures
+```bash
+# Test build locally before pushing
+npm run build:prod
+
+# Check bundle size
+ls -la bin/cctoast-wsl
+
+# Verify executable permissions
+file bin/cctoast-wsl
+```
+
+#### Windows CI Issues
+```bash
+# Test Windows mocking locally (if on Windows)
+$env:CI = "true"
+npm test
+
+# Validate PowerShell mock scripts
+powershell.exe -File .github/workflows/mock-test.ps1
+```
+
+#### Act Testing Issues
+```bash
+# Use verbose output for debugging
+act -j test --verbose
+
+# Test with specific Docker image
+act -j test -P ubuntu-latest=catthehacker/ubuntu:act-20.04
+
+# Skip Docker pull to use cached images
+act -j test --pull=false
+```
+
+### Security & Supply Chain
+
+#### Dependency Management
+- **Dependabot**: Automatic security updates (weekly schedule)
+- **Audit**: `npm audit` runs on every CI build
+- **Provenance**: All releases include npm provenance attestation
+- **SLSA-3**: Build process follows SLSA-3 security standards
+
+#### Vulnerability Reporting
+See [SECURITY.md](.github/SECURITY.md) for:
+- Vulnerability reporting process
+- Security best practices
+- Threat model documentation
+- Contact information for security issues
+
 ## Release Process
 
 ### Version Bumping
@@ -440,9 +655,9 @@ Handled automatically by release-please based on conventional commits:
 1. Ensure all tests pass on main
 2. Verify documentation is current
 3. Check bundle size is within limits
-4. Review CHANGELOG.md
-5. Approve release PR
-6. Monitor npm publish status
+4. Review CHANGELOG.md (auto-generated)
+5. Approve release PR (auto-created)
+6. Monitor npm publish status (automatic)
 
 ## Troubleshooting Development Issues
 
