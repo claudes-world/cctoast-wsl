@@ -2,6 +2,17 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Important Documentation References
+
+When working on this project, always consult these key documentation files:
+
+- @docs/PRD.md - Product Requirements Document with complete specifications
+- @docs/IMPLEMENTATION_PLAN.md - Detailed milestone-based implementation plan with acceptance criteria
+- @docs/ARCHITECTURE.md - System architecture, component design, and technical decisions
+- @docs/DEVELOPER_WORKFLOW.md - Development guidelines, testing procedures, and best practices
+
+Always ensure implementations align with these specifications and follow the established patterns.
+
 ## Project Overview
 
 cctoast-wsl is a utility that enables Windows toast notifications with sounds, messages, titles, and images from inside WSL for Claude Code hooks. It bridges WSL and Windows using PowerShell's BurntToast module.
