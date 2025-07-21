@@ -6,10 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 When working on this project, always consult these key documentation files:
 
-- @docs/PRD.md - Product Requirements Document with complete specifications
-- @docs/IMPLEMENTATION_PLAN.md - Detailed milestone-based implementation plan with acceptance criteria
-- @docs/ARCHITECTURE.md - System architecture, component design, and technical decisions
-- @docs/DEVELOPER_WORKFLOW.md - Development guidelines, testing procedures, and best practices
+- @docs/PRD.md - Complete Product Requirements Document defining 14 deliverables, CLI flags, dependency checks, hook installation logic, security requirements, testing goals (90% coverage), and future enhancements. Critical for understanding scope and success metrics.
+- @docs/IMPLEMENTATION_PLAN.md - 8-milestone implementation roadmap with detailed subtasks and acceptance criteria. Essential for tracking progress and understanding the simplified 2-layer architecture (CLI installer + runtime bash script).
+- @docs/ARCHITECTURE.md - Technical design showing 2-layer architecture, component interactions, data flow, module structure, error handling strategy, and extension points. Key for understanding how CLI installer sets up runtime bash script.
+- @docs/DEVELOPER_WORKFLOW.md - Development environment setup, branch strategy, commit conventions, testing procedures, debugging techniques, and troubleshooting guide. Required for contributing to the project.
+- @docs/BurntToast_manpage.txt - PowerShell BurntToast module documentation for creating Windows toast notifications. Reference for understanding the underlying notification API.
+- @docs/DOCUMENTATION_STYLE_GUIDE.md - Writing and formatting guidelines for all project documentation. Essential for creating engaging, scannable content with proper markdown formatting, visual elements, and structure patterns. Always reference before updating README or other user-facing docs.
 
 Always ensure implementations align with these specifications and follow the established patterns.
 
@@ -102,3 +104,7 @@ When tests are implemented:
 - Shell tests: Bats-core for bash scripts
 - Integration tests: Mock BurntToast module on Windows CI
 - Coverage: C8 with Codecov integration
+
+## Best Practices and Guidelines
+
+- Avoid using emojis in docs unless told to

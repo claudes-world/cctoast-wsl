@@ -3,8 +3,12 @@
 ## Overview
 This document outlines the complete implementation plan for cctoast-wsl, organized into 8 milestones with detailed subtasks and acceptance criteria. Each milestone builds upon the previous ones to deliver a secure, zero-admin utility for Windows toast notifications from WSL.
 
+The architecture follows a simplified 2-layer design:
+1. **CLI Installer (TypeScript)** - Used only at install time
+2. **Bash Script (show-toast.sh)** - Runtime component called directly by hooks
+
 ## Timeline & Priorities
-- **Target Duration**: 4-6 weeks
+- **Target Duration**: 3-4 weeks (reduced due to simplified architecture)
 - **Critical Path**: Milestones 1-5 (core functionality)
 - **Success Metrics**: Install <30s, 90% test coverage, ≤1 kLOC TypeScript, CI <2 min
 
@@ -12,7 +16,7 @@ This document outlines the complete implementation plan for cctoast-wsl, organiz
 
 ## Milestone 1: Foundation & Build System
 **Goal**: Establish TypeScript project structure with proper build tooling
-**Duration**: 2 days
+**Duration**: 1-2 days
 
 ### 1.1 Project Directory Structure
 **Task**: Create standard directory layout per PRD section 3
@@ -64,7 +68,7 @@ This document outlines the complete implementation plan for cctoast-wsl, organiz
 
 ## Milestone 2: Core CLI Framework
 **Goal**: Implement robust CLI with all required flags and interactive mode
-**Duration**: 3 days
+**Duration**: 2 days
 
 ### 2.1 Command Line Parser
 **Task**: Implement comprehensive argument parsing
@@ -118,8 +122,8 @@ This document outlines the complete implementation plan for cctoast-wsl, organiz
 ---
 
 ## Milestone 3: Dependency Management System
-**Goal**: Create robust dependency checker with intelligent caching
-**Duration**: 2 days
+**Goal**: Create robust dependency checker with intelligent caching and auto-installation
+**Duration**: 2-3 days
 
 ### 3.1 WSL Detection
 **Task**: Verify WSL environment (fatal check)
@@ -139,14 +143,17 @@ This document outlines the complete implementation plan for cctoast-wsl, organiz
 - [ ] Handle path case sensitivity
 - [ ] Timeout after 5 seconds
 
-### 3.3 BurntToast Module Check
-**Task**: Verify BurntToast installation (fatal check)
+### 3.3 BurntToast Module Check & Auto-Install
+**Task**: Verify BurntToast installation with auto-install option
 **Acceptance Criteria**:
 - [ ] Run PowerShell module check
 - [ ] Parse version information
-- [ ] Provide installation command on failure
+- [ ] Offer auto-installation if missing
+- [ ] Run `Install-Module BurntToast -Scope CurrentUser -Force` on user consent
+- [ ] Verify installation succeeded
 - [ ] Check for minimum version compatibility
 - [ ] Handle module loading errors
+- [ ] Fall back to manual instructions if auto-install fails
 
 ### 3.4 Optional Dependency Checks
 **Task**: Check for jq and Claude directory (warnings only)
@@ -171,7 +178,7 @@ This document outlines the complete implementation plan for cctoast-wsl, organiz
 
 ## Milestone 4: Installation Engine
 **Goal**: Build robust installer with JSONC-aware settings merger
-**Duration**: 4 days
+**Duration**: 3 days (simplified without PATH management)
 
 ### 4.1 JSONC Parser
 **Task**: Implement JSON with Comments parser
@@ -210,8 +217,8 @@ This document outlines the complete implementation plan for cctoast-wsl, organiz
 - [ ] Create directories if missing
 - [ ] Copy scripts to `~/.claude/cctoast-wsl/`
 - [ ] Set permissions to 0o500
-- [ ] Update PATH in shell profile
 - [ ] Create uninstall manifest
+- [ ] Copy assets (claude.png) to installation directory
 
 ### 4.5 Local Installation
 **Task**: Project-specific installation
@@ -219,15 +226,17 @@ This document outlines the complete implementation plan for cctoast-wsl, organiz
 - [ ] Target: `.claude/settings.local.json` (default)
 - [ ] Option for `.claude/settings.json` with --sync
 - [ ] Detect project root
-- [ ] Relative path handling
+- [ ] Copy scripts to `.claude/cctoast-wsl/`
+- [ ] Use absolute paths in hook commands
 - [ ] Git ignore recommendations
-- [ ] Workspace-specific wrapper
 
 ### 4.6 Hook Command Injection
-**Task**: Add notification and stop hooks
+**Task**: Add notification and stop hooks with direct script paths
 **Acceptance Criteria**:
-- [ ] Append `cctoast-wsl --notification-hook` if selected
-- [ ] Append `cctoast-wsl --stop-hook` if selected
+- [ ] Append `~/.claude/cctoast-wsl/show-toast.sh --notification-hook` for global install
+- [ ] Append `.claude/cctoast-wsl/show-toast.sh --notification-hook` for local install
+- [ ] Similar for stop hook with `--stop-hook` flag
+- [ ] Use absolute paths (expand ~ for global)
 - [ ] Avoid duplicate commands
 - [ ] Preserve existing hooks
 - [ ] Maintain array order
@@ -236,8 +245,8 @@ This document outlines the complete implementation plan for cctoast-wsl, organiz
 ---
 
 ## Milestone 5: Runtime Components
-**Goal**: Enhance bash script and implement hook handlers
-**Duration**: 2 days
+**Goal**: Enhance bash script for direct hook execution
+**Duration**: 1-2 days (simplified without wrapper)
 
 ### 5.1 Bash Script Enhancement
 **Task**: Update show-toast.sh to match PRD specifications
@@ -260,40 +269,41 @@ This document outlines the complete implementation plan for cctoast-wsl, organiz
 - [ ] Handle missing image gracefully
 
 ### 5.3 Notification Hook Handler
-**Task**: Implement --notification-hook command
+**Task**: Implement --notification-hook flag in show-toast.sh
 **Acceptance Criteria**:
-- [ ] Parse hook payload if available
-- [ ] Extract title/message from context
+- [ ] Recognize --notification-hook flag
+- [ ] Parse hook payload from stdin if available
 - [ ] Default: "Claude Code" / "Waiting for your response"
 - [ ] Support custom attribution
 - [ ] Log errors silently
 - [ ] Complete within 2 seconds
 
 ### 5.4 Stop Hook Handler  
-**Task**: Implement --stop-hook command
+**Task**: Implement --stop-hook flag in show-toast.sh
 **Acceptance Criteria**:
+- [ ] Recognize --stop-hook flag
 - [ ] Show completion notification
 - [ ] Include task duration if available
-- [ ] Custom stop message
-- [ ] Different icon/sound
+- [ ] Custom stop message: "Task completed"
+- [ ] Different icon if available
 - [ ] Non-blocking execution
 - [ ] Handle rapid successive calls
 
-### 5.5 Path Helper
-**Task**: Create path conversion utilities
+### 5.5 Path Conversion in Script
+**Task**: Implement WSL to Windows path conversion
 **Acceptance Criteria**:
-- [ ] WSL to Windows path conversion
-- [ ] Handle special characters
-- [ ] Support network paths
-- [ ] Validate path existence
-- [ ] Cache conversion results
-- [ ] Handle symlinks correctly
+- [ ] Use wslpath for path conversion
+- [ ] Handle special characters properly
+- [ ] Support both absolute and relative paths
+- [ ] Validate converted paths
+- [ ] Fallback for unconvertible paths
+- [ ] Handle missing files gracefully
 
 ---
 
 ## Milestone 6: Testing Infrastructure
 **Goal**: Achieve 90% test coverage with comprehensive test suites
-**Duration**: 3 days
+**Duration**: 2-3 days
 
 ### 6.1 Unit Test Framework
 **Task**: Set up Vitest for TypeScript testing
@@ -342,7 +352,7 @@ This document outlines the complete implementation plan for cctoast-wsl, organiz
 - [ ] Test uninstallation
 - [ ] Test upgrade scenarios
 - [ ] Verify file permissions
-- [ ] Check PATH updates
+- [ ] Verify hook commands use correct paths
 - [ ] Test in CI environment
 
 ### 6.6 Coverage Enforcement
@@ -377,7 +387,7 @@ This document outlines the complete implementation plan for cctoast-wsl, organiz
 - [ ] Step-by-step instructions
 - [ ] SHA-256 checksums for all files
 - [ ] Verification script
-- [ ] PATH configuration details
+- [ ] Direct script execution instructions
 - [ ] Permissions guide
 - [ ] Offline installation steps
 
@@ -398,7 +408,7 @@ This document outlines the complete implementation plan for cctoast-wsl, organiz
 - [ ] Detailed solutions
 - [ ] PowerShell errors
 - [ ] WSL configuration
-- [ ] PATH troubleshooting
+- [ ] Script execution troubleshooting
 - [ ] BurntToast issues
 
 ### 7.5 Advanced Usage Guide
@@ -535,6 +545,7 @@ This document outlines the complete implementation plan for cctoast-wsl, organiz
 - [ ] Comprehensive --help output
 - [ ] Interactive mode intuitive
 - [ ] Uninstall completely clean
+- [ ] Direct script execution without PATH complexity
 
 ---
 

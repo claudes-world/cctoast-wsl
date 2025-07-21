@@ -38,7 +38,7 @@ We follow GitHub Flow with these conventions:
 
 ```bash
 # Create a feature branch
-git checkout -b feature/progress-toasts
+git checkout -b feature/auto-install-burnttoast
 
 # Create a fix branch  
 git checkout -b fix/powershell-escaping
@@ -49,7 +49,7 @@ We use Conventional Commits for automatic versioning:
 
 ```bash
 # Features
-git commit -m "feat: add progress notification support"
+git commit -m "feat: add BurntToast auto-installation"
 git commit -m "feat(cli): add --timeout flag"
 
 # Fixes
@@ -157,6 +157,20 @@ describe('SettingsMerger', () => {
   run ./scripts/show-toast.sh --image /home/user/icon.png
   assert_output --partial "C:\\Users\\user\\icon.png"
 }
+
+@test "auto-installs BurntToast when missing" {
+  # Mock PowerShell to simulate missing module
+  function powershell.exe() {
+    if [[ "$*" == *"Get-Module"* ]]; then
+      return 1
+    fi
+    echo "Module installed"
+  }
+  export -f powershell.exe
+  
+  run ./scripts/show-toast.sh --title "Test"
+  assert_output --partial "Module installed"
+}
 ```
 
 ### 5. Debugging
@@ -175,14 +189,20 @@ bash -x scripts/show-toast.sh --title "Debug"
 # Or add to script
 #!/bin/bash
 set -euxo pipefail  # Debug mode
+
+# Test with verbose output
+CCTOAST_DEBUG=1 ./scripts/show-toast.sh --title "Debug Test"
 ```
 
 #### PowerShell Debugging
 ```powershell
 # Test PowerShell components directly
 $DebugPreference = "Continue"
-Import-Module BurntToast
+Import-Module BurntToast -ErrorAction Stop
 # Test your PowerShell snippets
+
+# Test BurntToast installation
+Get-Module -ListAvailable -Name BurntToast
 ```
 
 ### 6. Manual Testing
@@ -197,18 +217,40 @@ npm run build && node bin/cctoast-wsl --local --dry-run
 
 # Test with different flags
 node bin/cctoast-wsl --no-notification --stop-only
+
+# Test BurntToast auto-installation prompt
+node bin/cctoast-wsl --force
 ```
 
 #### Hook Testing
 ```bash
-# Test notification hook
-~/.claude/cctoast-wsl/bin/cctoast-wsl --notification-hook
+# Test notification hook directly using the script
+~/.claude/cctoast-wsl/scripts/show-toast.sh --notification-hook
 
 # Test stop hook
-~/.claude/cctoast-wsl/bin/cctoast-wsl --stop-hook
+~/.claude/cctoast-wsl/scripts/show-toast.sh --stop-hook
 
 # Test with custom parameters
-cctoast-wsl --title "Test" --message "Custom message"
+~/.claude/cctoast-wsl/scripts/show-toast.sh --title "Test" --message "Custom message"
+
+# Test with image
+~/.claude/cctoast-wsl/scripts/show-toast.sh --title "Test" --message "With icon" --image ~/icon.png
+```
+
+#### BurntToast Auto-Installation Testing
+```bash
+# Test detection of missing BurntToast
+powershell.exe -Command "Get-Module -ListAvailable -Name BurntToast"
+
+# Test auto-installation flow (in PowerShell)
+powershell.exe -NoProfile -Command "
+  if (-not (Get-Module -ListAvailable -Name BurntToast)) {
+    Install-Module BurntToast -Scope CurrentUser -Force
+  }
+"
+
+# Verify installation succeeded
+~/.claude/cctoast-wsl/scripts/show-toast.sh --title "BurntToast Test"
 ```
 
 ### 7. Performance Profiling
@@ -228,8 +270,14 @@ npm run analyze
 node --prof bin/cctoast-wsl --help
 node --prof-process isolate-*.log
 
-# Measure hook execution
-time cctoast-wsl --notification-hook
+# Measure script execution time
+time ~/.claude/cctoast-wsl/scripts/show-toast.sh --notification-hook
+
+# Test with multiple rapid calls
+for i in {1..10}; do
+  ~/.claude/cctoast-wsl/scripts/show-toast.sh --title "Test $i" &
+done
+wait
 ```
 
 ## Code Style Guidelines
@@ -268,7 +316,7 @@ class DependencyError extends Error {
 // Provide helpful error messages
 throw new DependencyError(
   'BurntToast',
-  'Install-Module BurntToast -Scope CurrentUser'
+  'Run: Install-Module BurntToast -Scope CurrentUser'
 );
 ```
 
@@ -290,6 +338,14 @@ readonly LOG_FILE="${HOME}/.claude/cctoast-wsl/error.log"
 log_error() {
   local message="$1"
   echo "[$(date -Iseconds)] ERROR: ${message}" >> "${LOG_FILE}"
+}
+
+# Check and auto-install BurntToast
+check_burnttoast() {
+  if ! powershell.exe -NoProfile -Command "Get-Module -ListAvailable -Name BurntToast" &>/dev/null; then
+    echo "Installing BurntToast module..."
+    powershell.exe -NoProfile -Command "Install-Module BurntToast -Scope CurrentUser -Force"
+  fi
 }
 ```
 
@@ -323,6 +379,7 @@ Brief description of changes
 - [ ] Integration tests pass
 - [ ] Manual testing completed
 - [ ] Shell scripts tested
+- [ ] BurntToast auto-installation tested
 
 ## Checklist
 - [ ] Code follows style guidelines
@@ -366,6 +423,9 @@ echo $WSL_INTEROP
 
 # Test path conversion
 wslpath -w /home/user/file.txt
+
+# Debug path issues in script
+bash -x ~/.claude/cctoast-wsl/scripts/show-toast.sh --image /test/path.png
 ```
 
 #### PowerShell Execution Policy
@@ -375,6 +435,18 @@ Get-ExecutionPolicy -List
 
 # Fix for development
 Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
+
+#### BurntToast Installation Issues
+```bash
+# Check if BurntToast is available
+powershell.exe -Command "Get-Module -ListAvailable -Name BurntToast"
+
+# Manual installation if auto-install fails
+powershell.exe -Command "Install-Module BurntToast -Scope CurrentUser -Force -AllowClobber"
+
+# Verify PowerShell Gallery is accessible
+powershell.exe -Command "Test-Connection -ComputerName 'www.powershellgallery.com' -Count 1"
 ```
 
 #### Node Version Mismatch
@@ -392,6 +464,9 @@ export CCTOAST_DEBUG=1
 
 # Run with debug output
 npm run build:dev
+
+# Test script with debug output
+CCTOAST_DEBUG=1 ~/.claude/cctoast-wsl/scripts/show-toast.sh --title "Debug"
 ```
 
 ## Best Practices
@@ -401,24 +476,28 @@ npm run build:dev
 - Validate all user input
 - Use minimal permissions
 - Follow principle of least privilege
+- Ensure BurntToast installation is user-scoped only
 
 ### 2. Performance
 - Profile before optimizing
 - Keep bundle size minimal
-- Cache expensive operations
+- Cache expensive operations (like BurntToast checks)
 - Use async I/O operations
+- Minimize PowerShell invocations
 
 ### 3. Maintainability
 - Write self-documenting code
 - Keep functions small and focused
 - Use meaningful names
 - Add tests for bug fixes
+- Document BurntToast version compatibility
 
 ### 4. Documentation
 - Update docs with code changes
 - Include examples in comments
 - Document non-obvious decisions
 - Keep README current
+- Document PowerShell requirements clearly
 
 ## Getting Help
 
@@ -427,6 +506,7 @@ npm run build:dev
 - [Architecture Overview](./ARCHITECTURE.md)
 - [Implementation Plan](./IMPLEMENTATION_PLAN.md)
 - [PRD Specification](./PRD.md)
+- [BurntToast Documentation](https://github.com/Windos/BurntToast)
 
 ### Communication
 - GitHub Issues for bugs/features
@@ -449,3 +529,5 @@ npm run build:dev
 - Bundle size changes
 - Code coverage trends
 - Issue resolution time
+- BurntToast installation success rate
+- Script execution performance
