@@ -11,7 +11,7 @@ Transform your Claude Code workflow with native Windows notifications that appea
 
 ## Demo
 <!-- GIF placeholder - TODO: Record toast notification demo -->
-<div style="text-align: center;">
+<div align="center">
   <img src="./docs/assets/demo.gif" alt="Product Demo Recording" style="width: 90%; max-width: 600px;" >
   <p style="font-size: 12px; color: #666;">Product Demo</p>
 </div>
@@ -51,7 +51,7 @@ npx @claude/cctoast-wsl --global --quiet
 ```
 
 <!-- placeholder for screen recording of install CLI options -->
-<div style="text-align: center;">
+<div align="center">
   <img src="./docs/assets/demo2.gif" alt="Installation CLI Demo Recording" style="width: 90%; max-width: 600px;" >
   <p style="font-size: 12px; color: #666;">CLI Installer Demo</p>
 </div>
@@ -191,29 +191,46 @@ powershell.exe -Command "Install-Module BurntToast -Scope CurrentUser -Force"
 
 ---
 
-<div style="text-align: center;">
-  <h3>
-    <b>Claude's World</b><br/>
+<div align="center">
+  <h2>
+    <b>Claude's World</b>
+    <br/>
+    <h6>
+      <img src="./docs/assets/claudes-world-logo.png" alt="Claude's World Logo" width="300" height="250" >
+      <p style="font-size: 12px; color: #666;">
+        <a href="https://github.com/claudes-world">@claudes-world</a> | 
+        <a href="https://claude.do">claude.do</a>
+      </p>
+    </h6>
+  </h2> 
+
+  <br/>
+  
+  an experimental project by 
+  
+  <br/>
+  
+  <a href="https://github.com/mcorrig4">@mcorrig4</a> & <a href="https://github.com/chaintail">@chaintail</a>
+  
+  <br/>
+  <br/>
+
   <h6>
     <a href="https://chaintail.xyz">
-      <img src="./docs/assets/claudes-world-logo.png" alt="Claude's World Logo" style="width: 90%; max-width: 200px;" >
       <p style="font-size: 12px; color: #666;">
-      <a href="https://github.com/claudes-world">@claudes-world</a> | 
-      <a href="https://claude.do">claude.do</a>
+        <img src="./docs/assets/chaintail-logo.png" alt="Chaintail Labs Logo" width="100" height="100" >
+        <p>
+          Chaintail Labs
+        </p>
       </p>
     </a>
   </h6>
-  </h3> 
-
-  an experimental project by 
-  <br/>
-  <a href="https://github.com/mcorrig4">@mcorrig4</a> & <a href="https://github.com/chaintail">@chaintail</a>
-  <br/>
-  <br/>
-  <a href="https://chaintail.xyz">
-
-  <img src="./docs/assets/chaintail-logo.png" alt="Chaintail Labs Logo" style="width: 90%; max-width: 200px;" >
-  <p style="font-size: 12px; color: #666;">Chaintail Labs</p>
-  </a>
-  <p style="font-size: 12px; color: #666;">Copyright (c) 2025 Chaintail Labs</p>
+  <p style="font-size: 12px; color: #666;"><i>Copyright (c) 2025 Chaintail Labs</i></p>
 </div>
+<!--
+| <img src="./docs/assets/chaintail-logo.png" alt="Chaintail Labs Logo" width="100" height="100" > |
+|:-:|
+| Chaintail Labs |
+| |
+| Copyright (c) 2025 Chaintail Labs |
+  -->
