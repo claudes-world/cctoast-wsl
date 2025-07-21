@@ -1,0 +1,67 @@
+PS C:\Users\liamc> man New-BurntToastNotification
+
+NAME
+    New-BurntToastNotification
+
+SYNOPSIS
+    Creates and displays a Toast Notification.
+
+
+SYNTAX
+    New-BurntToastNotification [-Text <String[]>] [-Column <AdaptiveSubgroup[]>] [-AppId <String>] [-AppLogo <String>] [-HeroImage <String>]
+    [-Sound <String>] [-Header <ToastHeader>] [-ProgressBar <AdaptiveProgressBar[]>] [-UniqueIdentifier <String>] [-DataBinding <Hashtable>]
+    [-ExpirationTime <DateTime>] [-SuppressPopup] [-CustomTimestamp <DateTime>] [-ActivatedAction <ScriptBlock>] [-DismissedAction
+    <ScriptBlock>] [-WhatIf] [-Confirm] [<CommonParameters>]
+
+    New-BurntToastNotification [-Text <String[]>] [-Column <AdaptiveSubgroup[]>] [-AppId <String>] [-AppLogo <String>] [-HeroImage <String>]
+    -Sound <String> -Button <IToastButton[]> [-Header <ToastHeader>] [-ProgressBar <AdaptiveProgressBar[]>] [-UniqueIdentifier <String>]
+    [-DataBinding <Hashtable>] [-ExpirationTime <DateTime>] [-SuppressPopup] [-CustomTimestamp <DateTime>] [-ActivatedAction <ScriptBlock>]
+    [-DismissedAction <ScriptBlock>] [-WhatIf] [-Confirm] [<CommonParameters>]
+
+    New-BurntToastNotification [-Text <String[]>] [-Column <AdaptiveSubgroup[]>] [-AppId <String>] [-AppLogo <String>] [-HeroImage <String>]
+    -Sound <String> -SnoozeAndDismiss [-Header <ToastHeader>] [-ProgressBar <AdaptiveProgressBar[]>] [-UniqueIdentifier <String>] [-DataBinding
+    <Hashtable>] [-ExpirationTime <DateTime>] [-SuppressPopup] [-CustomTimestamp <DateTime>] [-ActivatedAction <ScriptBlock>] [-DismissedAction
+    <ScriptBlock>] [-WhatIf] [-Confirm] [<CommonParameters>]
+
+    New-BurntToastNotification [-Text <String[]>] [-Column <AdaptiveSubgroup[]>] [-AppId <String>] [-AppLogo <String>] [-HeroImage <String>]
+    -Silent -Button <IToastButton[]> [-Header <ToastHeader>] [-ProgressBar <AdaptiveProgressBar[]>] [-UniqueIdentifier <String>] [-DataBinding
+    <Hashtable>] [-ExpirationTime <DateTime>] [-SuppressPopup] [-CustomTimestamp <DateTime>] [-ActivatedAction <ScriptBlock>] [-DismissedAction
+    <ScriptBlock>] [-WhatIf] [-Confirm] [<CommonParameters>]
+
+    New-BurntToastNotification [-Text <String[]>] [-Column <AdaptiveSubgroup[]>] [-AppId <String>] [-AppLogo <String>] [-HeroImage <String>]
+    -Silent -SnoozeAndDismiss [-Header <ToastHeader>] [-ProgressBar <AdaptiveProgressBar[]>] [-UniqueIdentifier <String>] [-DataBinding
+    <Hashtable>] [-ExpirationTime <DateTime>] [-SuppressPopup] [-CustomTimestamp <DateTime>] [-ActivatedAction <ScriptBlock>] [-DismissedAction
+    <ScriptBlock>] [-WhatIf] [-Confirm] [<CommonParameters>]
+
+    New-BurntToastNotification [-Text <String[]>] [-Column <AdaptiveSubgroup[]>] [-AppId <String>] [-AppLogo <String>] [-HeroImage <String>]
+    -Silent [-Header <ToastHeader>] [-ProgressBar <AdaptiveProgressBar[]>] [-UniqueIdentifier <String>] [-DataBinding <Hashtable>]
+    [-ExpirationTime <DateTime>] [-SuppressPopup] [-CustomTimestamp <DateTime>] [-ActivatedAction <ScriptBlock>] [-DismissedAction
+    <ScriptBlock>] [-WhatIf] [-Confirm] [<CommonParameters>]
+
+    New-BurntToastNotification [-Text <String[]>] [-Column <AdaptiveSubgroup[]>] [-AppId <String>] [-AppLogo <String>] [-HeroImage <String>]
+    -SnoozeAndDismiss [-Header <ToastHeader>] [-ProgressBar <AdaptiveProgressBar[]>] [-UniqueIdentifier <String>] [-DataBinding <Hashtable>]
+    [-ExpirationTime <DateTime>] [-SuppressPopup] [-CustomTimestamp <DateTime>] [-ActivatedAction <ScriptBlock>] [-DismissedAction
+    <ScriptBlock>] [-WhatIf] [-Confirm] [<CommonParameters>]
+
+    New-BurntToastNotification [-Text <String[]>] [-Column <AdaptiveSubgroup[]>] [-AppId <String>] [-AppLogo <String>] [-HeroImage <String>]
+    -Button <IToastButton[]> [-Header <ToastHeader>] [-ProgressBar <AdaptiveProgressBar[]>] [-UniqueIdentifier <String>] [-DataBinding
+    <Hashtable>] [-ExpirationTime <DateTime>] [-SuppressPopup] [-CustomTimestamp <DateTime>] [-ActivatedAction <ScriptBlock>] [-DismissedAction
+    <ScriptBlock>] [-WhatIf] [-Confirm] [<CommonParameters>]
+
+
+DESCRIPTION
+    The New-BurntToastNotification function creates and displays a Toast Notification on Microsoft Windows 10.
+
+    You can specify the text and/or image displayed as well as selecting the sound that is played when the Toast Notification is displayed.
+
+    You can optionally call the New-BurntToastNotification function with the Toast alias.
+
+
+RELATED LINKS
+    https://github.com/Windos/BurntToast/blob/main/Help/New-BurntToastNotification.md
+
+REMARKS
+    To see the examples, type: "get-help New-BurntToastNotification -examples".
+    For more information, type: "get-help New-BurntToastNotification -detailed".
+    For technical information, type: "get-help New-BurntToastNotification -full".
+    For online help, type: "get-help New-BurntToastNotification -online"
