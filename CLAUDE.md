@@ -6,13 +6,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 When working on this project, always consult these key documentation files:
 
+**Orchestration & Planning:**
+- @docs/PROJECT_MANAGEMENT.md - Comprehensive project management guide specifically for LLM developers. Covers issue management, feature branching, PR workflows, and progress tracking. Essential for understanding how to properly start, track, and complete work on features and milestones.
+
+**Planning, Implementation, & Coding:**
 - @docs/PRD.md - Complete Product Requirements Document defining 14 deliverables, CLI flags, dependency checks, hook installation logic, security requirements, testing goals (90% coverage), and future enhancements. Critical for understanding scope and success metrics.
 - @docs/IMPLEMENTATION_PLAN.md - 8-milestone implementation roadmap with detailed subtasks and acceptance criteria. Essential for tracking progress and understanding the simplified 2-layer architecture (CLI installer + runtime bash script).
 - @docs/ARCHITECTURE.md - Technical design showing 2-layer architecture, component interactions, data flow, module structure, error handling strategy, and extension points. Key for understanding how CLI installer sets up runtime bash script.
 - @docs/DEVELOPER_WORKFLOW.md - Development environment setup, branch strategy, commit conventions, testing procedures, debugging techniques, and troubleshooting guide. Required for contributing to the project.
-- @docs/PROJECT_MANAGEMENT.md - Comprehensive project management guide specifically for LLM developers. Covers issue management, feature branching, PR workflows, and progress tracking. Essential for understanding how to properly start, track, and complete work on features and milestones.
-- @docs/BurntToast_manpage.txt - PowerShell BurntToast module documentation for creating Windows toast notifications. Reference for understanding the underlying notification API.
+
+**Documentation & Writing Text:**
 - @docs/DOCUMENTATION_STYLE_GUIDE.md - Writing and formatting guidelines for all project documentation. Essential for creating engaging, scannable content with proper markdown formatting, visual elements, and structure patterns. Always reference before updating README or other user-facing docs.
+
+**Manpage & Reference Docs:**
+- @docs/BurntToast_manpage.txt - PowerShell BurntToast module documentation for creating Windows toast notifications. Reference for understanding the underlying notification API.
 
 Always ensure implementations align with these specifications and follow the established patterns.
 
@@ -36,9 +43,10 @@ When requesting user testing, provide specific instructions:
 4. **Environment notes**: WSL vs native terminal requirements
 
 ### Testing Workflow:
-1. **Create** `PLEASE-TEST-<issue-number>.md` file with comprehensive test instructions
+1. **Create** `user_testing/PLEASE-TEST-<issue-number>.md` file with comprehensive test instructions. Commit and push.
 2. **Tag @mcorrig4** in issue comment with friendly testing request and test file link
-3. **Wait** for user validation before closing milestone
+3. **Prompt**: also tell the user the same instructions through a message. Include a link to the issue comment at the end of your message.
+4. **Wait** for user validation before closing milestone
 4. **Address** any issues found and re-test if needed
 
 ### Partner Collaboration:
@@ -49,8 +57,8 @@ When requesting user testing, provide specific instructions:
 - Thank them for collaboration - never pressure
 
 ### Example Files Created:
-- `PLEASE-TEST-3.md` - Interactive CLI mode validation for Milestone 2
-- Future: `PLEASE-TEST-X.md` - BurntToast integration, PowerShell execution, etc.
+- `user_testing/PLEASE-TEST-3.md` - Interactive CLI mode validation for Milestone 2
+- Future: `user_testing/PLEASE-TEST-X.md` - BurntToast integration, PowerShell execution, etc.
 
 ### Standard Test File Sections:
 - Environment requirements
