@@ -1,5 +1,13 @@
 # cctoast-wsl
-Use hooks in Claude Code to trigger Windows toast notifications with sounds, messages, titles, and images, from inside WSL.
+
+[![CI Status](https://github.com/claudes-world/cctoast-wsl/workflows/CI/badge.svg)](https://github.com/claudes-world/cctoast-wsl/actions)
+[![Coverage](https://codecov.io/gh/claudes-world/cctoast-wsl/badge.svg)](https://codecov.io/gh/claudes-world/cctoast-wsl)
+[![npm version](https://badge.fury.io/js/%40claude%2Fcctoast-wsl.svg)](https://www.npmjs.com/package/@claude/cctoast-wsl)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+> **Secure, zero-admin utility** that enables Windows toast notifications from WSL for Claude Code hooks using PowerShell's BurntToast module.
+
+Transform your Claude Code workflow with native Windows notifications that appear when Claude is waiting for input or completes tasks - all from within WSL with no system-level changes required.
 
 ## Demo
 <!-- GIF placeholder - TODO: Record toast notification demo -->
@@ -24,9 +32,22 @@ graph TB
 
 ## Quick Start
 
-### Automatic Installation (Recommended)
+Get Windows toast notifications working in under 2 minutes:
+
+1. **Install**: `npx @claude/cctoast-wsl`
+2. **Test**: Run Claude Code - notifications appear automatically  
+3. **Done**: Toast notifications now work from WSL!
+
+> [!TIP]  
+> Installation completes in under 30 seconds and requires no admin privileges
+
+### One-line installation
 ```bash
-npx @claudes-world/cctoast-wsl
+# Recommended: Global installation with interactive prompts
+npx @claude/cctoast-wsl
+
+# Alternative: Quiet install for CI/scripts
+npx @claude/cctoast-wsl --global --quiet
 ```
 
 <!-- placeholder for screen recording of install CLI options -->
@@ -34,6 +55,48 @@ npx @claudes-world/cctoast-wsl
   <img src="./docs/assets/demo2.gif" alt="Installation CLI Demo Recording" style="width: 90%; max-width: 600px;" >
   <p style="font-size: 12px; color: #666;">CLI Installer Demo</p>
 </div>
+
+## CLI Reference
+
+Complete list of available flags and options:
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--global/-g` | ✓ | Install to `~/.claude/…` |
+| `--local/-l` | | Install to `.claude/…` |
+| `--notification / --no-notification` | on | Include Notification hook |
+| `--stop / --no-stop` | on | Include Stop hook |
+| `--sync` | off | When local, modify tracked `settings.json` |
+| `--print-instructions/-p` | | Show usage & exit |
+| `--json` | off | Machine-readable summary |
+| `--dry-run/-n` | | Preview without writes |
+| `--force/-f` | | Bypass failed checks (except BurntToast) |
+| `--quiet/-q` | | Suppress prompts for CI |
+| `--uninstall` | | Remove install (scope prompts) |
+| `--version/-v` `--help/-h` | | Meta commands |
+
+> [!NOTE]  
+> **Defaults**: Global installation + both hooks enabled + no sync  
+> **Exit codes**: `0` success · `1` abort · `2` dependency failure · `3` I/O error
+
+### Common usage examples
+
+```bash
+# Global installation (recommended)
+npx @claude/cctoast-wsl
+
+# Local project installation  
+npx @claude/cctoast-wsl --local
+
+# Install only notification hook
+npx @claude/cctoast-wsl --no-stop
+
+# Preview changes without installing
+npx @claude/cctoast-wsl --dry-run
+
+# Uninstall
+npx @claude/cctoast-wsl --uninstall
+```
 
 ## Manual Installation
 
@@ -75,18 +138,47 @@ npx @claudes-world/cctoast-wsl
    }
    ```
 
+## Troubleshooting
+
+### Quick fixes for common issues
+
+#### ❌ "PowerShell execution policy" error
+```bash
+# Fix execution policy for current user only (no admin required)
+powershell.exe -Command "Set-ExecutionPolicy -Scope CurrentUser RemoteSigned"
+```
+
+#### ❌ "BurntToast module not found"
+```bash
+# Install BurntToast module for current user
+powershell.exe -Command "Install-Module BurntToast -Scope CurrentUser -Force"
+```
+
+#### ❌ No notifications appearing
+1. Check that you're in WSL: `echo $WSL_DISTRO_NAME`
+2. Test notification manually: `~/.claude/cctoast-wsl/show-toast.sh --title "Test"`
+3. Verify Claude hooks: Check `~/.claude/settings.json`
+
+> [!TIP]  
+> For more detailed troubleshooting, see the [FAQ](docs/FAQ.md)
+
 ## Documentation
 
-### Planning & Requirements
-- **[Product Requirements](docs/PRD.md)** - Complete specifications including CLI flags, security requirements, and success metrics
-- **[Implementation Plan](docs/IMPLEMENTATION_PLAN.md)** - 8-milestone roadmap with detailed tasks and acceptance criteria
+### Getting Help
+- **[FAQ](docs/FAQ.md)** - Common issues and solutions
+- **[Manual Installation](docs/MANUAL.md)** - Step-by-step installation without npm
+- **[Security Guide](docs/SECURITY.md)** - Security considerations and best practices
+- **[Advanced Usage](docs/ADVANCED.md)** - Customization and integration examples
 
-### Technical Design
-- **[Architecture](docs/ARCHITECTURE.md)** - System design, component interactions, and technical decisions
-- **[BurntToast Reference](docs/BurntToast_manpage.txt)** - PowerShell module documentation for Windows toast notifications
+### For Developers
+- **[Contributing Guide](CONTRIBUTING.md)** - Development environment and contribution guidelines
+- **[Architecture](docs/ARCHITECTURE.md)** - System design and technical decisions
+- **[Developer Workflow](docs/DEVELOPER_WORKFLOW.md)** - Setup, testing, and debugging
 
-### Development
-- **[Developer Workflow](docs/DEVELOPER_WORKFLOW.md)** - Setup, testing, debugging, and contribution guidelines
+### Technical Specifications
+- **[Product Requirements](docs/PRD.md)** - Complete specifications and success metrics
+- **[Implementation Plan](docs/IMPLEMENTATION_PLAN.md)** - 8-milestone development roadmap
+- **[BurntToast Reference](docs/BurntToast_manpage.txt)** - PowerShell module documentation
 
 
 ---
