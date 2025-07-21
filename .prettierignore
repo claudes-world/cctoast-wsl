@@ -1,0 +1,7 @@
+node_modules/
+dist/
+bin/
+*.md
+*.json
+.github/
+CHANGELOG.md

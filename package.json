@@ -1,16 +1,18 @@
 {
-  "name": "cctoast-wsl",
+  "name": "@claude/cctoast-wsl",
   "version": "0.0.1",
-  "description": "Get Windows toast notifications with sounds from Claude Code running inside WSL.",
+  "description": "Secure, zero-admin utility for Windows toast notifications from WSL via Claude Code hooks using PowerShell BurntToast module",
   "keywords": [
     "claude",
-    "claude",
-    "code",
+    "claude-code",
     "wsl",
+    "windows",
     "notifications",
-    "ai",
-    "agent",
-    "cursor"
+    "toast",
+    "burnttoast",
+    "powershell",
+    "hooks",
+    "ai"
   ],
   "homepage": "https://github.com/claudes-world/cctoast-wsl#readme",
   "bugs": {
@@ -23,14 +25,70 @@
   "license": "MIT",
   "author": "mcorrig4",
   "type": "module",
-  "main": "index.js",
+  "bin": {
+    "cctoast-wsl": "./bin/cctoast-wsl"
+  },
+  "main": "./bin/cctoast-wsl",
+  "exports": {
+    ".": "./bin/cctoast-wsl"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ],
   "directories": {
-    "doc": "docs"
+    "doc": "docs",
+    "bin": "bin",
+    "lib": "src"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "node build.mjs",
+    "build:dev": "NODE_ENV=development node build.mjs",
+    "build:prod": "NODE_ENV=production node build.mjs",
+    "watch": "NODE_ENV=development node build.mjs --watch",
+    "clean": "rm -rf dist/ bin/cctoast-wsl",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "npm run lint:ts && npm run lint:shell",
+    "lint:ts": "eslint src/**/*.ts",
+    "lint:shell": "shellcheck scripts/*.sh",
+    "format": "prettier --write src/**/*.ts *.mjs *.json",
+    "format:check": "prettier --check src/**/*.ts *.mjs *.json",
+    "check:all": "npm run typecheck && npm run lint && npm test",
+    "dev": "npm run build:dev",
+    "prepare": "husky"
   },
   "dependencies": {
     "task-master-ai": "^0.21.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.15",
+    "@typescript-eslint/eslint-plugin": "^8.37.0",
+    "@typescript-eslint/parser": "^8.37.0",
+    "esbuild": "^0.25.8",
+    "eslint": "^9.31.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.2",
+    "prettier": "^3.6.2",
+    "typescript": "^5.8.3"
+  },
+  "lint-staged": {
+    "src/**/*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "scripts/*.sh": [
+      "shellcheck"
+    ],
+    "*.{mjs,json}": [
+      "prettier --write"
+    ]
   }
 }
