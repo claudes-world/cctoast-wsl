@@ -188,6 +188,14 @@ gh issue comment <number> --body "Progress update: [details]"
 
 See @docs/PROJECT_MANAGEMENT.md for complete workflow details.
 
+## Git Worktree for Multi-Agent Development
+
+When multiple LLM agents work simultaneously, create isolated worktrees to avoid branch conflicts:
+```bash
+git worktree add worktree-issue5 feat/5-installation-engine
+cd worktree-issue5
+```
+
 ## Best Practices and Guidelines
 
 - Avoid using emojis in docs unless told to

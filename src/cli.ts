@@ -28,6 +28,9 @@ import color from 'picocolors';
 
 import { DependencyChecker, BurntToastAutoInstaller } from './dependencies.js';
 
+import { Installer } from './installer.js';
+
+
 // Get package.json for version info
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const packagePath = join(__dirname, '..', 'package.json');
@@ -576,28 +579,73 @@ async function main(): Promise<void> {
       console.log('\n📋 DRY RUN MODE - No files will be modified');
     }
 
-    // TODO: Implement actual installation/uninstallation logic in later milestones
-    if (!options.json && !shouldUseInteractive) {
-      const result: InstallationResult = {
-        action: options.uninstall ? 'uninstall' : 'install',
-        scope: options.local ? 'local' : 'global',
-        hooks: {
-          notification: options.notification,
-          stop: options.stop,
-        },
-        settings: {
-          sync: options.sync,
-          dryRun: options.dryRun,
-          force: options.force,
-          quiet: options.quiet,
-        },
-      };
+    // Run installation or uninstallation using the Installation Engine
+    const installer = new Installer({
+      global: options.global || !options.local,
+      local: options.local,
+      notificationHook: options.notification,
+      stopHook: options.stop,
+      sync: options.sync,
+      dryRun: options.dryRun,
+    });
 
-      formatOutput(result, false);
-      console.log(
-        '\n🎉 Dependency Management System implemented successfully!'
-      );
-      console.log('📋 Installation logic will be added in Milestone 4');
+    try {
+      let installResult;
+      if (options.uninstall) {
+        installResult = await installer.uninstall();
+      } else {
+        installResult = await installer.install();
+      }
+
+      if (options.json) {
+        // For JSON output, include installation results
+        const jsonResult = {
+          action: options.uninstall ? 'uninstall' : 'install',
+          scope: options.local ? 'local' : 'global',
+          hooks: {
+            notification: options.notification,
+            stop: options.stop,
+          },
+          settings: {
+            sync: options.sync,
+            dryRun: options.dryRun,
+            force: options.force,
+            quiet: options.quiet,
+          },
+          installation: {
+            success: installResult.success,
+            installedTo: installResult.installedTo,
+            settingsPath: installResult.settingsPath,
+            backupPath: installResult.backupPath,
+            hooksAdded: installResult.hooksAdded,
+            message: installResult.message,
+          },
+        };
+        console.log(JSON.stringify(jsonResult, null, 2));
+      } else {
+        // Human-readable output
+        if (installResult.success) {
+          console.log(`\n${installResult.message}`);
+          if (installResult.backupPath) {
+            console.log(`📁 Backup created: ${installResult.backupPath}`);
+          }
+          if (installResult.hooksAdded.length > 0) {
+            console.log(`🪝 Hooks added: ${installResult.hooksAdded.join(', ')}`);
+          }
+        } else {
+          console.error(`\n❌ ${installResult.message}`);
+          process.exit(ExitCodes.IO_ERROR);
+        }
+      }
+    } catch (error) {
+      const errorMessage = `Installation failed: ${error instanceof Error ? error.message : error}`;
+      if (options.json) {
+        console.log(JSON.stringify({ error: errorMessage }, null, 2));
+      } else {
+        console.error(`\n❌ ${errorMessage}`);
+      }
+      process.exit(ExitCodes.IO_ERROR);
+
     }
   } catch (error) {
     console.error(
