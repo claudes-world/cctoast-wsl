@@ -26,6 +26,39 @@ npm run build:dev
 npm run check:env
 ```
 
+### **MANDATORY for LLM Agents**: Git Worktree Setup
+**CRITICAL**: If you are an LLM agent, you MUST create a git worktree to avoid conflicts with other agents:
+
+```bash
+# Navigate to main project directory
+cd cctoast-wsl
+
+# Get the absolute latest code from remote
+git fetch origin
+
+# Create isolated worktree from latest remote main
+git worktree add worktree-issue<NUMBER> origin/main
+
+# Switch to your worktree
+cd worktree-issue<NUMBER>
+
+# Example for working on Issue #8:
+git fetch origin
+git worktree add worktree-issue8 origin/main
+cd worktree-issue8
+
+# Now you can work safely without conflicts, starting from latest code
+```
+
+**Cleanup after work is complete:**
+```bash
+# Return to main directory
+cd ..
+
+# Remove worktree when done
+git worktree remove worktree-issue8
+```
+
 ## Development Workflow
 
 ### 1. Branch Strategy

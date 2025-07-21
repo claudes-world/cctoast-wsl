@@ -19,33 +19,59 @@ The cctoast-wsl project uses **GitHub Issues → Feature Branches → Pull Reque
 
 ### Before Starting Any Work
 
-#### 1. Issue Selection
+#### 1. Issue Selection & Search
 ```bash
 # View all open issues
 gh issue list
 
+# Find available work (not assigned and ready)
+gh issue list --assignee "" --state open
+
 # View issues by milestone
 gh issue list --milestone "Foundation & Build System"
 
-# View issues by label
-gh issue list --label "P0-critical"
+# Check what's currently being worked on
+gh issue list --assignee "@me"
 ```
 
-#### 2. Issue Assignment
+#### 2. **MANDATORY**: Git Worktree Setup
+**CRITICAL**: LLM agents MUST use git worktrees to avoid branch conflicts
+
+```bash
+# Navigate to main project directory
+cd /path/to/cctoast-wsl
+
+# Get the absolute latest code from remote
+git fetch origin
+
+# Create isolated worktree from latest remote main
+git worktree add worktree-issue<NUMBER> origin/main
+
+# Switch to your worktree
+cd worktree-issue<NUMBER>
+
+# Example for Issue #8:
+git fetch origin
+git worktree add worktree-issue8 origin/main
+cd worktree-issue8
+```
+
+#### 3. Issue Assignment & Status Management
 ```bash
 # Assign issue to yourself
 gh issue edit <issue-number> --add-assignee @me
 
 # Example:
-gh issue edit 2 --add-assignee @me
+gh issue edit 8 --add-assignee @me
 ```
 
-#### 3. Issue Analysis
+#### 4. Issue Analysis
 Read the issue completely and verify:
 - [ ] Acceptance criteria are clear
 - [ ] Dependencies are understood
 - [ ] Required documentation is available
 - [ ] Effort estimate aligns with available time
+- [ ] No other agent is working on this (check assignee)
 
 ### Issue Status Tracking
 
@@ -74,7 +100,7 @@ gh issue comment <issue-number> --body "✅ **Completed**: All acceptance criter
 
 ---
 
-## 🌿 Feature Branching Strategy
+## 🌿 Feature Branching Strategy (Within Worktree)
 
 ### Branch Naming Convention
 ```
@@ -88,24 +114,31 @@ Types:
 - chore/    - Maintenance tasks
 ```
 
-### Starting a Feature
+### Starting a Feature (After Worktree Setup)
 
-#### 1. Create and Switch to Feature Branch
+#### 1. Create Feature Branch in Your Worktree
 ```bash
-# Example for Milestone 1 (Issue #2)
-git checkout -b feat/2-foundation-build-system
+# You're already in worktree-issue<NUMBER> directory
+# Create feature branch from main
+git checkout -b feat/<issue-number>-<description>
 
-# Example for a bug fix
+# Example for Issue #8 (already in worktree-issue8/):
+git checkout -b feat/8-documentation-user-experience
+
+# Example for a bug fix in worktree-issue15/:
 git checkout -b fix/15-powershell-escaping-issue
-
-# Example for documentation
-git checkout -b docs/12-update-installation-guide
 ```
 
 #### 2. Link Branch to Issue
 ```bash
 # Comment on issue to link branch
-gh issue comment 2 --body "🌿 **Branch Created**: \`feat/2-foundation-build-system\`
+gh issue comment <issue-number> --body "🌿 **Branch Created**: \`feat/<issue>-<description>\`
+**Worktree**: \`worktree-issue<number>\`
+Starting development on this issue."
+
+# Example:
+gh issue comment 8 --body "🌿 **Branch Created**: \`feat/8-documentation-user-experience\`
+**Worktree**: \`worktree-issue8\`
 Starting development on this milestone."
 ```
 
