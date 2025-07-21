@@ -10,16 +10,22 @@ import process from 'node:process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import {
-  intro,
-  outro,
-  select,
-  multiselect,
-  confirm,
-  isCancel,
-  cancel,
-  log,
-} from '@clack/prompts';
+// import {
+//   intro as p.intro,
+//   outro as p.outro,
+//   select as p.select,
+//   multiselect as p.multiselect,
+//   confirm as p.confirm,
+//   isCancel as p.isCancel,
+//   cancel as p.cancel,
+//   log as p.log,
+//   spinner as p.spinner,
+//   tasks as p.tasks,
+//   group as p.group,
+// } from '@clack/prompts';
+import * as p from '@clack/prompts';
+import color from 'picocolors';
+
 import { DependencyChecker, BurntToastAutoInstaller } from './dependencies.js';
 
 // Get package.json for version info
@@ -202,7 +208,7 @@ function isInteractive(): boolean {
  * Handle cancellation in clack prompts
  */
 function handleCancel(): void {
-  cancel('Operation cancelled by user');
+  p.cancel('Operation cancelled by user');
   process.exit(ExitCodes.USER_ABORT);
 }
 
@@ -210,16 +216,16 @@ function handleCancel(): void {
  * Interactive prompt flow: scope → hooks → sync → confirm
  */
 async function runInteractiveMode(): Promise<CliOptions> {
-  intro('🍞 cctoast-wsl Installation');
+  p.intro('🍞 cctoast-wsl Installation');
 
   // Step 1: Scope selection
-  const scope = await select({
+  const scope = await p.select({
     message: 'Choose installation scope:',
     options: [
       {
         value: 'global',
         label: 'Global',
-        hint: 'Install to ~/.claude/ (recommended)',
+        hint: '★ Recommended - Install to ~/.claude/',
       },
       {
         value: 'local',
@@ -229,13 +235,13 @@ async function runInteractiveMode(): Promise<CliOptions> {
     ],
   });
 
-  if (isCancel(scope)) {
+  if (p.isCancel(scope)) {
     handleCancel();
   }
   const scopeValue = scope as string;
 
   // Step 2: Hook selection
-  const hooks = await multiselect({
+  const hooks = await p.multiselect({
     message: 'Select hooks to enable:',
     options: [
       {
@@ -253,19 +259,19 @@ async function runInteractiveMode(): Promise<CliOptions> {
     required: true,
   });
 
-  if (isCancel(hooks)) {
+  if (p.isCancel(hooks)) {
     handleCancel();
   }
 
   // Step 3: Sync option (only for local installs)
   let sync = false;
   if (scopeValue === 'local') {
-    const syncResult = await confirm({
+    const syncResult = await p.confirm({
       message: 'Modify tracked settings.json instead of settings.local.json?',
       initialValue: false,
     });
 
-    if (isCancel(syncResult)) {
+    if (p.isCancel(syncResult)) {
       handleCancel();
     }
     sync = syncResult as boolean;
@@ -279,7 +285,7 @@ async function runInteractiveMode(): Promise<CliOptions> {
     ...(scopeValue === 'local' ? [`Sync: ${sync ? 'yes' : 'no'}`] : []),
   ];
 
-  log.info(
+  p.log.info(
     `Configuration summary:\n${summary.map(item => `  • ${item}`).join('\n')}`
   );
 
@@ -305,19 +311,19 @@ async function runInteractiveMode(): Promise<CliOptions> {
   // TODO: After pre-flight checks, improve this message to be more precise, descriptive, and better formatted/worded.
   // Consider including actual file paths, resolved hook actions, and a summary of what will happen next.
   if (configExplanation) {
-    log.message(configExplanation);
+    p.log.message(configExplanation);
   }
 
-  const proceed = await confirm({
+  const proceed = await p.confirm({
     message: 'Proceed with installation?',
     initialValue: true,
   });
 
-  if (isCancel(proceed) || !proceed) {
+  if (p.isCancel(proceed) || !proceed) {
     handleCancel();
   }
 
-  outro('Ready to install! 🎉');
+  p.outro('Ready to install! 🎉');
 
   return {
     global: scopeValue === 'global',
@@ -339,12 +345,12 @@ async function runInteractiveMode(): Promise<CliOptions> {
  */
 function setupSignalHandlers(): void {
   process.on('SIGINT', () => {
-    cancel('\nOperation cancelled by user');
+    p.cancel('\nOperation cancelled by user');
     process.exit(ExitCodes.USER_ABORT);
   });
 
   process.on('SIGTERM', () => {
-    cancel('\nOperation terminated');
+    p.cancel('\nOperation terminated');
     process.exit(ExitCodes.USER_ABORT);
   });
 }
@@ -353,13 +359,15 @@ function setupSignalHandlers(): void {
  * Run dependency checks with user-friendly output
  */
 async function runDependencyChecks(options: CliOptions): Promise<void> {
+  const s = p.spinner();
+  s.start('Checking system dependencies...');
   if (!options.quiet) {
     console.log('🔍 Checking system dependencies...\n');
   }
 
   const checker = new DependencyChecker(options.force);
   const results = await checker.checkAll();
-
+  
   // Separate fatal and non-fatal failures
   const fatalFailures = results.filter(r => !r.passed && r.fatal);
   const warnings = results.filter(r => !r.passed && !r.fatal);
@@ -369,7 +377,8 @@ async function runDependencyChecks(options: CliOptions): Promise<void> {
   if (!options.quiet) {
     // Show passed checks
     passed.forEach(result => {
-      console.log(`✅ ${result.message}`);
+      p.log.message(`${result.message}`, { symbol: color.cyan('✔') });
+
     });
 
     // Show warnings
@@ -403,13 +412,13 @@ async function runDependencyChecks(options: CliOptions): Promise<void> {
 
       try {
         console.log('\n🤖 Auto-installation available for BurntToast module');
-        const consent = await confirm({
+        const consent = await p.confirm({
           message:
             'Would you like to automatically install BurntToast PowerShell module?',
           initialValue: true,
         });
 
-        if (isCancel(consent)) {
+        if (p.isCancel(consent)) {
           handleCancel();
         }
 
@@ -455,6 +464,7 @@ async function runDependencyChecks(options: CliOptions): Promise<void> {
   if (!options.quiet && warnings.length === 0 && fatalFailures.length === 0) {
     console.log('\n🎉 All dependency checks passed!');
   }
+  s.stop();
 }
 
 /**
