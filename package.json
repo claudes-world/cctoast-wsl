@@ -1,0 +1,36 @@
+{
+  "name": "cctoast-wsl",
+  "version": "0.0.1",
+  "description": "Get Windows toast notifications with sounds from Claude Code running inside WSL.",
+  "keywords": [
+    "claude",
+    "claude",
+    "code",
+    "wsl",
+    "notifications",
+    "ai",
+    "agent",
+    "cursor"
+  ],
+  "homepage": "https://github.com/claudes-world/cctoast-wsl#readme",
+  "bugs": {
+    "url": "https://github.com/claudes-world/cctoast-wsl/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/claudes-world/cctoast-wsl.git"
+  },
+  "license": "MIT",
+  "author": "mcorrig4",
+  "type": "module",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "task-master-ai": "^0.21.0"
+  }
+}
