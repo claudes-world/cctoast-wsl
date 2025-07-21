@@ -435,9 +435,53 @@ var DependencyChecker = class {
     }
   }
 };
+var BurntToastAutoInstaller = class {
+  async isInstalled() {
+    try {
+      const { stdout } = await execAsync(
+        'powershell.exe -Command "Get-Module -ListAvailable -Name BurntToast"',
+        { timeout: 1e4 }
+      );
+      return stdout.trim().length > 0 && !stdout.includes("No modules");
+    } catch {
+      return false;
+    }
+  }
+  async promptInstall() {
+    return true;
+  }
+  async install() {
+    try {
+      console.log("Installing BurntToast PowerShell module...");
+      const { stderr } = await execAsync(
+        'powershell.exe -Command "Install-Module BurntToast -Scope CurrentUser -Force -AllowClobber"',
+        { timeout: 6e4 }
+        // Allow up to 60 seconds for installation
+      );
+      if (stderr && !stderr.includes("WARNING")) {
+        throw new Error(`Installation failed: ${stderr}`);
+      }
+      console.log("BurntToast module installed successfully");
+    } catch (error) {
+      throw new Error(
+        `Failed to install BurntToast: ${error instanceof Error ? error.message : error}`
+      );
+    }
+  }
+  async verify() {
+    try {
+      const { stdout } = await execAsync(
+        'powershell.exe -Command "Import-Module BurntToast -ErrorAction Stop; Write-Output success"',
+        { timeout: 1e4 }
+      );
+      return stdout.trim() === "success";
+    } catch {
+      return false;
+    }
+  }
+};
 
 // src/cli.ts
-import { stream } from "@clack/prompts";
 var __dirname = fileURLToPath(new URL(".", import.meta.url));
 var packagePath = join2(__dirname, "..", "package.json");
 var packageJson = JSON.parse(readFileSync(packagePath, "utf8"));
@@ -643,22 +687,85 @@ function setupSignalHandlers() {
   });
 }
 async function runDependencyChecks(options) {
+  const s = p.spinner();
+  s.start("Checking system dependencies...");
+  if (!options.quiet) {
+    console.log("\u{1F50D} Checking system dependencies...\n");
+  }
   const checker = new DependencyChecker(options.force);
-  const checkStream = async function* () {
-    yield import_picocolors.default.cyan("\u23F3 Starting dependency checks...");
-    const results = await checker.checkAll();
-    for (const r of results) {
-      if (r.passed) {
-        yield import_picocolors.default.green(`\u2714 ${r.message}`);
-      } else if (r.fatal) {
-        yield import_picocolors.default.red(`\u2716 ${r.message}`);
-      } else {
-        yield import_picocolors.default.yellow(`\u26A0\uFE0F  ${r.message}`);
+  const results = await checker.checkAll();
+  const fatalFailures = results.filter((r) => !r.passed && r.fatal);
+  const warnings = results.filter((r) => !r.passed && !r.fatal);
+  const passed = results.filter((r) => r.passed);
+  if (!options.quiet) {
+    passed.forEach((result) => {
+      p.log.message(`${result.message}`, { symbol: import_picocolors.default.cyan("\u2714") });
+    });
+    warnings.forEach((result) => {
+      console.log(`\u26A0\uFE0F  ${result.message}`);
+      if (result.remedy) {
+        console.log(`   \u{1F4A1} ${result.remedy}`);
+      }
+    });
+  }
+  if (fatalFailures.length > 0) {
+    if (!options.quiet) {
+      console.log("\n\u274C Fatal dependency checks failed:\n");
+      fatalFailures.forEach((result) => {
+        console.log(`   \u2022 ${result.message}`);
+        if (result.remedy) {
+          console.log(`     Fix: ${result.remedy}`);
+        }
+      });
+    }
+    const burntToastFailure = fatalFailures.find(
+      (r) => r.name === "burnttoast-module"
+    );
+    if (burntToastFailure && !options.quiet) {
+      const autoInstaller = new BurntToastAutoInstaller();
+      try {
+        console.log("\n\u{1F916} Auto-installation available for BurntToast module");
+        const consent = await p.confirm({
+          message: "Would you like to automatically install BurntToast PowerShell module?",
+          initialValue: true
+        });
+        if (p.isCancel(consent)) {
+          handleCancel();
+        }
+        if (consent) {
+          await autoInstaller.install();
+          if (await autoInstaller.verify()) {
+            console.log(
+              "\u2705 BurntToast module installed and verified successfully"
+            );
+            const remainingFailures = fatalFailures.filter(
+              (r) => r.name !== "burnttoast-module"
+            );
+            if (remainingFailures.length === 0) {
+              console.log("\n\u{1F389} All dependency checks now pass!");
+              return;
+            }
+          } else {
+            console.log("\u274C BurntToast installation verification failed");
+          }
+        }
+      } catch (error) {
+        console.log(
+          `\u274C Auto-installation failed: ${error instanceof Error ? error.message : error}`
+        );
       }
     }
-    yield import_picocolors.default.cyan("\u2705 All dependency checks complete!");
-  }();
-  stream.info(checkStream);
+    if (!options.force || fatalFailures.some((r) => r.name === "burnttoast-module")) {
+      console.log(
+        "\n\u{1F4A1} Use --force to bypass non-fatal checks, but BurntToast is required"
+      );
+      process2.exit(ExitCodes.DEPENDENCY_FAILURE);
+    }
+  }
+  if (!options.quiet && warnings.length === 0 && fatalFailures.length === 0) {
+    console.log("\n\u{1F389} All dependency checks passed!");
+  }
+  s.stop();
 }
 function hasExplicitFlags(argv) {
   const flagsToCheck = [
