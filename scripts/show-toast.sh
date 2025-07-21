@@ -1,10 +1,52 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Runtime paths and configuration
+# Detect execution context and set appropriate paths
+detect_context() {
+    local script_dir script_path
+    script_dir="$(cd "$(dirname "${BASH_SOURCE[1]}")" && pwd)"
+    script_path="$(realpath "${BASH_SOURCE[1]}")"
+    
+    # Debug output if enabled
+    if [[ "${CCTOAST_DEBUG:-}" == "1" ]]; then
+        echo "DEBUG: Script directory: $script_dir" >&2
+        echo "DEBUG: Script path: $script_path" >&2
+    fi
+    
+    # Check if we're running from an installed location
+    if [[ "$script_path" == "${HOME}/.claude/cctoast-wsl/"* ]]; then
+        # Installed mode - use installation paths
+        echo "installed:${HOME}/.claude/cctoast-wsl"
+    elif [[ -f "${script_dir}/../assets/claude.png" ]]; then
+        # Development mode - running from project directory
+        echo "development:${script_dir}/.."
+    else
+        # Unknown context - use installation paths as fallback
+        echo "unknown:${HOME}/.claude/cctoast-wsl"
+    fi
+}
+
+# Set runtime paths based on detected context
+CONTEXT_INFO=$(detect_context)
+CONTEXT_TYPE="${CONTEXT_INFO%%:*}"
+CONTEXT_ROOT="${CONTEXT_INFO#*:}"
+
 readonly LOG="${HOME}/.claude/cctoast-wsl/toast-error.log"
-readonly DEFAULT_ICON="${HOME}/.claude/cctoast-wsl/assets/claude.png"
 readonly timeout_bin=$(command -v timeout || true)
+
+# Set default icon path based on context
+if [[ "$CONTEXT_TYPE" == "development" ]]; then
+    readonly DEFAULT_ICON="${CONTEXT_ROOT}/assets/claude.png"
+else
+    readonly DEFAULT_ICON="${HOME}/.claude/cctoast-wsl/assets/claude.png"
+fi
+
+# Debug output for context detection
+if [[ "${CCTOAST_DEBUG:-}" == "1" ]]; then
+    echo "DEBUG: Context: $CONTEXT_TYPE" >&2
+    echo "DEBUG: Root: $CONTEXT_ROOT" >&2
+    echo "DEBUG: Default icon: $DEFAULT_ICON" >&2
+fi
 
 # Hook mode defaults - notification mode
 readonly NOTIFICATION_TITLE="Claude Code"
@@ -56,17 +98,31 @@ convert_path() {
     local input_path="$1"
     local converted_path
     
+    # Debug output if enabled
+    if [[ "${CCTOAST_DEBUG:-}" == "1" ]]; then
+        echo "DEBUG: Converting path: $input_path" >&2
+    fi
+    
     # Skip conversion if path looks like it's already Windows format
     if [[ "$input_path" =~ ^[A-Za-z]: ]]; then
+        if [[ "${CCTOAST_DEBUG:-}" == "1" ]]; then
+            echo "DEBUG: Path already in Windows format: $input_path" >&2
+        fi
         echo "$input_path"
         return 0
     fi
     
     # Convert WSL path to Windows path
     if converted_path=$(wslpath -w "$input_path" 2>/dev/null); then
+        if [[ "${CCTOAST_DEBUG:-}" == "1" ]]; then
+            echo "DEBUG: Converted '$input_path' to '$converted_path'" >&2
+        fi
         echo "$converted_path"
     else
         log_error "Failed to convert path: $input_path"
+        if [[ "${CCTOAST_DEBUG:-}" == "1" ]]; then
+            echo "DEBUG: Path conversion failed, using original: $input_path" >&2
+        fi
         # Return original path as fallback
         echo "$input_path"
     fi
@@ -76,17 +132,31 @@ convert_path() {
 validate_path() {
     local path="$1"
     
+    # Debug output if enabled
+    if [[ "${CCTOAST_DEBUG:-}" == "1" ]]; then
+        echo "DEBUG: Validating path: $path" >&2
+    fi
+    
     # Check if file exists (for WSL paths)
     if [[ -f "$path" ]]; then
+        if [[ "${CCTOAST_DEBUG:-}" == "1" ]]; then
+            echo "DEBUG: Path exists as WSL file: $path" >&2
+        fi
         return 0
     fi
     
     # For Windows paths, we can't easily validate from WSL
     # Just check if it looks like a valid Windows path
     if [[ "$path" =~ ^[A-Za-z]:[\\].* ]]; then
+        if [[ "${CCTOAST_DEBUG:-}" == "1" ]]; then
+            echo "DEBUG: Path looks like valid Windows path: $path" >&2
+        fi
         return 0
     fi
     
+    if [[ "${CCTOAST_DEBUG:-}" == "1" ]]; then
+        echo "DEBUG: Path validation failed: $path" >&2
+    fi
     return 1
 }
 
@@ -221,20 +291,33 @@ EOF
     [[ -n "$message" ]] || message="Notification"
     
     # Handle image path
-    local final_icon="$DEFAULT_ICON"
+    local final_icon=""
     if [[ -n "$image_path" ]]; then
         if validate_path "$image_path"; then
             final_icon=$(convert_path "$image_path")
+            if [[ "${CCTOAST_DEBUG:-}" == "1" ]]; then
+                echo "DEBUG: Using custom image: $final_icon" >&2
+            fi
         else
-            log_error "Image file not found or invalid: $image_path, using default icon"
-            # Continue with default icon
+            echo "WARNING: Image file not found: $image_path, using default icon" >&2
+            log_error "Custom image file not found: $image_path"
+            # Fall through to default icon logic
         fi
-    else
-        # Use default icon if it exists, otherwise continue without icon
-        if [[ ! -f "$DEFAULT_ICON" ]]; then
-            final_icon=""
-        else
+    fi
+    
+    # If no custom icon or custom icon failed, try default icon
+    if [[ -z "$final_icon" ]]; then
+        if [[ -f "$DEFAULT_ICON" ]]; then
             final_icon=$(convert_path "$DEFAULT_ICON")
+            if [[ "${CCTOAST_DEBUG:-}" == "1" ]]; then
+                echo "DEBUG: Using default icon: $final_icon" >&2
+            fi
+        else
+            if [[ "${CCTOAST_DEBUG:-}" == "1" ]]; then
+                echo "DEBUG: No icon available (default icon not found at: $DEFAULT_ICON)" >&2
+            fi
+            # Continue without icon - PowerShell will handle this gracefully
+            final_icon=""
         fi
     fi
     
