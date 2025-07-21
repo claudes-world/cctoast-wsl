@@ -348,6 +348,94 @@ gh issue comment 2 --body "🎉 **Milestone 1 Complete**
 
 ---
 
+## 🧪 Collaborative Testing Protocol
+
+### When to Request User Testing
+
+Before closing milestones that include interactive or system-dependent features, create a `PLEASE-TEST-<issue-number>.md` file for user validation.
+
+#### Features Requiring User Testing:
+- Interactive prompts (@clack/prompts)
+- TTY detection logic  
+- Signal handling (Ctrl+C)
+- Color output
+- Terminal-specific behaviors
+- Cross-platform compatibility
+- Features that behave differently in CI vs interactive environments
+
+#### Testing File Creation Process:
+
+```bash
+# Create test file for issue #3
+# File: PLEASE-TEST-3.md
+
+# Include in the file:
+# 1. Environment requirements (WSL, interactive terminal, etc.)
+# 2. Pre-test setup commands
+# 3. Numbered test cases with expected behaviors
+# 4. Visual quality assessment criteria
+# 5. Clear reporting format (✅/❌ for each test)
+```
+
+#### Test File Template Structure:
+```markdown
+# 🧪 PLEASE TEST: Issue #X - [Feature Name]
+
+## Environment Requirements
+- Specific environment needed (WSL, Windows, terminal type)
+
+## Pre-Test Setup  
+- Commands to prepare for testing
+
+## Test Cases
+### ✅ Test N: [Test Name]
+**Command:** `command to run`
+**Expected Behavior:** What should happen
+**Report:** ✅/❌ [Question to answer]
+
+## Reporting Results
+- Clear format for user to provide feedback
+```
+
+### User Testing Workflow
+
+1. **LLM Creates Test File**: When feature is "implementation complete"
+2. **Request User Testing**: Comment on issue with link to test file
+3. **User Performs Testing**: Follow test file instructions
+4. **User Reports Results**: Comment with ✅/❌ results and feedback
+5. **LLM Addresses Issues**: Fix any problems found
+6. **Milestone Closure**: Only close when user testing passes
+
+### Example Test Request Comment:
+
+```bash
+gh issue comment 3 --body "🧪 **User Testing Required**
+
+Implementation is complete but needs validation in a real terminal environment.
+
+**Test File**: [PLEASE-TEST-3.md](./PLEASE-TEST-3.md)
+
+**Why Testing Needed**: Interactive prompts, TTY detection, and signal handling cannot be fully tested in Claude Code environment.
+
+**Please test when convenient and report results. Will wait for your validation before closing this milestone.**"
+```
+
+### Post-Testing Actions
+
+```bash
+# After successful testing
+gh issue comment 3 --body "✅ **User Testing Complete** - All test cases passed
+Ready to close milestone"
+
+# If issues found
+gh issue comment 3 --body "🔧 **Issues Found in Testing** 
+Will address the following problems:
+- [List issues found]
+- [ETA for fixes]"
+```
+
+---
+
 ## 🚨 Error Handling and Recovery
 
 ### When Issues Are Blocked

@@ -66,6 +66,8 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@clack/prompts": "^0.11.0",
+    "commander": "^14.0.0",
     "task-master-ai": "^0.21.0"
   },
   "devDependencies": {
