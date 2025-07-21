@@ -180,13 +180,24 @@ powershell.exe -Command "Install-Module BurntToast -Scope CurrentUser -Force"
 - **[Implementation Plan](docs/IMPLEMENTATION_PLAN.md)** - 8-milestone development roadmap
 - **[BurntToast Reference](docs/BurntToast_manpage.txt)** - PowerShell module documentation
 
+#### CI/CD Pipeline
+cctoast-wsl uses a comprehensive automated testing and release pipeline:
+
+- 🧪 **Automated Testing**: Vitest with 90% coverage requirement, shell script validation
+- 🏗️ **Multi-Platform CI**: Ubuntu Node 18/20 + Windows Node 20 with mocked BurntToast  
+- 📦 **Automated Releases**: Conventional commits → Release Please → npm with provenance
+- 🔒 **Security**: SLSA-3 attestation, Dependabot updates, comprehensive security policies
+
+For local CI testing: `act -j test --dryrun` (requires [nektos/act](https://github.com/nektos/act))
+
+See [Developer Workflow - CI/CD Pipeline](docs/DEVELOPER_WORKFLOW.md#cicd-pipeline--testing) for complete details.
 
 ---
 
 ## Future TODOs
 - [ ] add hook for PreCompact
 - [ ] contributing guide
-- [ ] package CI/CD
+- [x] package CI/CD
 - [ ] colored text reference in DOCUMENTATION_STYLE_GUIDE.md using mathjax https://raw.githubusercontent.com/lifeparticle/Markdown-Cheatsheet/refs/heads/main/MathJax.md)
 
 ---
