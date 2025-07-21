@@ -11,7 +11,7 @@ Provide a **secure, zero‑admin utility** (`cctoast-wsl`) that lets WSL users t
 
 ### Out‑of‑scope
 
-* Non‑Windows back‑ends, GUI installers, auto‑installing BurntToast, non‑Claude integrations.
+* Non‑Windows back‑ends, GUI installers, non‑Claude integrations.
 
 ### Success Metrics
 
