@@ -23,7 +23,7 @@ Install completes <30 s; hooks emit toasts in new shell; 90 % test coverage; ≤
 ## 2 · High‑Level Architecture
 
 1. **Installer CLI (`cctoast-wsl`)** – Node ≥18 binary; parses flags/prompts, verifies deps, copies files, merges JSON.
-2. **Bash Script (`show-toast.sh`)** – Direct runtime component; validates WSL, sanitises input, calls `powershell.exe` (≤10 s timeout).
+2. **Bash Script (`show-toast.sh`)** – Direct runtime component; validates WSL, sanitizes input, calls `powershell.exe` (≤10 s timeout).
 3. **PowerShell Script** – `Import-Module BurntToast; New-BurntToastNotification …`.
 4. **Settings Merger** – JSONC‑aware deep‑merge; duplicates skipped.
 5. **Assets** – `claude.png`, future glyphs.

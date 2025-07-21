@@ -10,6 +10,7 @@ When working on this project, always consult these key documentation files:
 - @docs/IMPLEMENTATION_PLAN.md - 8-milestone implementation roadmap with detailed subtasks and acceptance criteria. Essential for tracking progress and understanding the simplified 2-layer architecture (CLI installer + runtime bash script).
 - @docs/ARCHITECTURE.md - Technical design showing 2-layer architecture, component interactions, data flow, module structure, error handling strategy, and extension points. Key for understanding how CLI installer sets up runtime bash script.
 - @docs/DEVELOPER_WORKFLOW.md - Development environment setup, branch strategy, commit conventions, testing procedures, debugging techniques, and troubleshooting guide. Required for contributing to the project.
+- @docs/PROJECT_MANAGEMENT.md - Comprehensive project management guide specifically for LLM developers. Covers issue management, feature branching, PR workflows, and progress tracking. Essential for understanding how to properly start, track, and complete work on features and milestones.
 - @docs/BurntToast_manpage.txt - PowerShell BurntToast module documentation for creating Windows toast notifications. Reference for understanding the underlying notification API.
 - @docs/DOCUMENTATION_STYLE_GUIDE.md - Writing and formatting guidelines for all project documentation. Essential for creating engaging, scannable content with proper markdown formatting, visual elements, and structure patterns. Always reference before updating README or other user-facing docs.
 
@@ -104,6 +105,37 @@ When tests are implemented:
 - Shell tests: Bats-core for bash scripts
 - Integration tests: Mock BurntToast module on Windows CI
 - Coverage: C8 with Codecov integration
+
+## GitHub Issue Management
+
+The project uses milestone-based GitHub issues to track all development work:
+
+### Issue Structure
+- **8 Milestone Issues (#2-#9)**: Each represents one of the 8 implementation milestones
+- **Comprehensive Task Lists**: Each milestone issue contains detailed checkbox lists of all subtasks
+- **Labels System**: Run `./labels.sh` to create the full labeling system for organization
+- **Progress Tracking**: Use issue comments to provide regular progress updates
+
+### Workflow for LLM Developers
+1. **Select Issue**: Choose from milestone issues #2-#9 based on priority and dependencies
+2. **Create Branch**: Use `feat/<issue-number>-<description>` naming convention
+3. **Track Progress**: Update issue with comments as tasks are completed
+4. **Create PR**: Link back to the milestone issue when ready for review
+5. **Complete**: Close issue after successful merge
+
+### Key Commands
+```bash
+# View all milestone issues
+gh issue list --label "milestone"
+
+# Assign issue to yourself
+gh issue edit <number> --add-assignee @me
+
+# Update progress
+gh issue comment <number> --body "Progress update: [details]"
+```
+
+See @docs/PROJECT_MANAGEMENT.md for complete workflow details.
 
 ## Best Practices and Guidelines
 
