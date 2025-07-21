@@ -41,8 +41,105 @@ I am reviewing the planning docs you made:          │
 
 
 
+------------------------------------------------------------
+Great questions! You're absolutely right to
+  question the 3-layer architecture - we're 
+  over-engineering this.
 
+  Looking at your existing solution, you already
+  have the core working:
+  - Your show-toast.sh script handles the actual
+  notification logic perfectly
+  - Your current Claude settings show a working
+  (though complex) PowerShell command
 
+  Simplified Architecture
+
+  You're correct - at its core, we're just parsing
+  hook input and calling powershell.exe. Here's a
+  much simpler approach:
+
+  2 Layers Instead of 3:
+  1. CLI Installer (TypeScript/Node) - runs only
+  during installation via npx
+  2. Bash Script (your show-toast.sh) - the actual
+  runtime component
+
+  Remove the "wrapper executable" layer entirely.
+  The Claude hook can directly call:
+  ~/.claude/cctoast-wsl/show-toast.sh
+  --notification-hook
+
+  Auto-Installing BurntToast
+
+  Yes! You can absolutely install BurntToast from
+  WSL:
+
+  powershell.exe -Command "Install-Module BurntToast
+   -Scope CurrentUser -Force"
+
+  We should add this to the installer's dependency
+  checking phase:
+  1. Check if BurntToast exists
+  2. If not, prompt user: "Install BurntToast
+  automatically? (y/N)"
+  3. Run the install command if they agree
+
+  NPM/Open Source Best Practices
+
+  Your instincts about keeping it simple are exactly
+   right. The key practices to follow:
+
+  Security
+
+  - ✅ No postinstall scripts (users run installer
+  explicitly)
+  - ✅ No elevated permissions needed
+  - ✅ Scripts run with user permissions only
+
+  Architecture
+
+  - ✅ Separation of install-time vs runtime
+  - ✅ Minimal runtime dependencies (just bash)
+  - ✅ Clear, auditable code
+
+  Quality
+
+  - Good testing coverage
+  - Clear documentation
+  - Proper error handling
+  - Semantic versioning
+
+  Revised Simple Plan
+
+  1. CLI Tool: TypeScript installer that:
+    - Checks/installs dependencies (including
+  BurntToast)
+    - Copies your show-toast.sh to
+  ~/.claude/cctoast-wsl/
+    - Updates Claude settings with simple hook
+  commands
+  2. Runtime: Your existing bash script (with minor
+  enhancements)
+  3. Hook Commands:
+  {
+    "Notification":
+  ["~/.claude/cctoast-wsl/show-toast.sh 
+  --notification-hook"],
+    "Stop": ["~/.claude/cctoast-wsl/show-toast.sh 
+  --stop-hook"]
+  }
+
+  This is much simpler to implement and maintain
+  while still following all the open source best
+  practices. Your existing show-toast.sh does most
+  of the heavy lifting already!
+
+  Would you like me to help revise the
+  implementation plan with this simplified
+  architecture?
+
+-------------------------------------------------------------
 
 please update all of the planning documents. but 
   first, I need help researching all the json shemas
