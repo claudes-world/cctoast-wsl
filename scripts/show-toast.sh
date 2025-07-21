@@ -14,18 +14,23 @@ readonly NOTIFICATION_MESSAGE="Waiting for your response"
 readonly STOP_TITLE="Claude Code"
 readonly STOP_MESSAGE="Task completed"
 
-# PowerShell script embedded as heredoc
-readonly ps_script=$(cat <<'PS'
-param($title, $message, $icon, $log)
+# PowerShell script embedded as heredoc with parameter handling
+get_ps_script() {
+    local title="$1"
+    local message="$2" 
+    local icon="$3"
+    local log="$4"
+    
+    cat <<PS
 try {
     Import-Module BurntToast -ErrorAction Stop
-    New-BurntToastNotification -Text $title, $message -AppLogo $icon
+    New-BurntToastNotification -Text '$title', '$message' -AppLogo '$icon'
 } catch {
-    $_ | Out-File -Append -FilePath $log
+    \$_ | Out-File -Append -FilePath '$log'
     exit 1
 }
 PS
-)
+}
 
 # Logging function - creates log file only on first error
 log_error() {
@@ -85,10 +90,10 @@ validate_path() {
     return 1
 }
 
-# PowerShell execution function with timeout
-run_powershell() {
+# Main execution function with timeout wrapper
+execute_notification() {
     local title="$1"
-    local message="$2" 
+    local message="$2"
     local icon="$3"
     
     # Escape parameters for PowerShell
@@ -98,25 +103,18 @@ run_powershell() {
     esc_icon=$(escape_ps "$icon")
     esc_log=$(escape_ps "$LOG")
     
-    # Execute PowerShell with parameters
-    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$ps_script" \
-        -title "$esc_title" -message "$esc_message" -icon "$esc_icon" -log "$esc_log"
-}
-
-# Main execution function with timeout wrapper
-execute_notification() {
-    local title="$1"
-    local message="$2"
-    local icon="$3"
+    # Generate the PowerShell script with escaped parameters
+    local ps_script_content
+    ps_script_content=$(get_ps_script "$esc_title" "$esc_message" "$esc_icon" "$esc_log")
     
     # Use timeout if available, otherwise run directly
     if [[ -n "$timeout_bin" ]]; then
-        if ! "$timeout_bin" 10s run_powershell "$title" "$message" "$icon"; then
+        if ! timeout 10s powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$ps_script_content"; then
             log_error "PowerShell execution failed or timed out"
             return 1
         fi
     else
-        if ! run_powershell "$title" "$message" "$icon"; then
+        if ! powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$ps_script_content"; then
             log_error "PowerShell execution failed"
             return 1
         fi
