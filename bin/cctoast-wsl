@@ -1,22 +1,111 @@
 #!/usr/bin/env node
 
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __commonJS = (cb, mod) => function __require() {
+  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
+
+// node_modules/picocolors/picocolors.js
+var require_picocolors = __commonJS({
+  "node_modules/picocolors/picocolors.js"(exports, module) {
+    var p2 = process || {};
+    var argv = p2.argv || [];
+    var env = p2.env || {};
+    var isColorSupported = !(!!env.NO_COLOR || argv.includes("--no-color")) && (!!env.FORCE_COLOR || argv.includes("--color") || p2.platform === "win32" || (p2.stdout || {}).isTTY && env.TERM !== "dumb" || !!env.CI);
+    var formatter = (open, close, replace = open) => (input) => {
+      let string = "" + input, index = string.indexOf(close, open.length);
+      return ~index ? open + replaceClose(string, close, replace, index) + close : open + string + close;
+    };
+    var replaceClose = (string, close, replace, index) => {
+      let result = "", cursor = 0;
+      do {
+        result += string.substring(cursor, index) + replace;
+        cursor = index + close.length;
+        index = string.indexOf(close, cursor);
+      } while (~index);
+      return result + string.substring(cursor);
+    };
+    var createColors = (enabled = isColorSupported) => {
+      let f = enabled ? formatter : () => String;
+      return {
+        isColorSupported: enabled,
+        reset: f("\x1B[0m", "\x1B[0m"),
+        bold: f("\x1B[1m", "\x1B[22m", "\x1B[22m\x1B[1m"),
+        dim: f("\x1B[2m", "\x1B[22m", "\x1B[22m\x1B[2m"),
+        italic: f("\x1B[3m", "\x1B[23m"),
+        underline: f("\x1B[4m", "\x1B[24m"),
+        inverse: f("\x1B[7m", "\x1B[27m"),
+        hidden: f("\x1B[8m", "\x1B[28m"),
+        strikethrough: f("\x1B[9m", "\x1B[29m"),
+        black: f("\x1B[30m", "\x1B[39m"),
+        red: f("\x1B[31m", "\x1B[39m"),
+        green: f("\x1B[32m", "\x1B[39m"),
+        yellow: f("\x1B[33m", "\x1B[39m"),
+        blue: f("\x1B[34m", "\x1B[39m"),
+        magenta: f("\x1B[35m", "\x1B[39m"),
+        cyan: f("\x1B[36m", "\x1B[39m"),
+        white: f("\x1B[37m", "\x1B[39m"),
+        gray: f("\x1B[90m", "\x1B[39m"),
+        bgBlack: f("\x1B[40m", "\x1B[49m"),
+        bgRed: f("\x1B[41m", "\x1B[49m"),
+        bgGreen: f("\x1B[42m", "\x1B[49m"),
+        bgYellow: f("\x1B[43m", "\x1B[49m"),
+        bgBlue: f("\x1B[44m", "\x1B[49m"),
+        bgMagenta: f("\x1B[45m", "\x1B[49m"),
+        bgCyan: f("\x1B[46m", "\x1B[49m"),
+        bgWhite: f("\x1B[47m", "\x1B[49m"),
+        blackBright: f("\x1B[90m", "\x1B[39m"),
+        redBright: f("\x1B[91m", "\x1B[39m"),
+        greenBright: f("\x1B[92m", "\x1B[39m"),
+        yellowBright: f("\x1B[93m", "\x1B[39m"),
+        blueBright: f("\x1B[94m", "\x1B[39m"),
+        magentaBright: f("\x1B[95m", "\x1B[39m"),
+        cyanBright: f("\x1B[96m", "\x1B[39m"),
+        whiteBright: f("\x1B[97m", "\x1B[39m"),
+        bgBlackBright: f("\x1B[100m", "\x1B[49m"),
+        bgRedBright: f("\x1B[101m", "\x1B[49m"),
+        bgGreenBright: f("\x1B[102m", "\x1B[49m"),
+        bgYellowBright: f("\x1B[103m", "\x1B[49m"),
+        bgBlueBright: f("\x1B[104m", "\x1B[49m"),
+        bgMagentaBright: f("\x1B[105m", "\x1B[49m"),
+        bgCyanBright: f("\x1B[106m", "\x1B[49m"),
+        bgWhiteBright: f("\x1B[107m", "\x1B[49m")
+      };
+    };
+    module.exports = createColors();
+    module.exports.createColors = createColors;
+  }
+});
 
 // src/cli.ts
+var import_picocolors = __toESM(require_picocolors(), 1);
 import { Command } from "commander";
-import process from "node:process";
+import process2 from "node:process";
 import { readFileSync } from "node:fs";
 import { join as join2 } from "node:path";
 import { fileURLToPath } from "node:url";
-import {
-  intro,
-  outro,
-  select,
-  multiselect,
-  confirm,
-  isCancel,
-  cancel,
-  log
-} from "@clack/prompts";
+import * as p from "@clack/prompts";
 
 // src/dependencies.ts
 import { exec } from "node:child_process";
@@ -108,9 +197,12 @@ var DependencyChecker = class {
   async checkPowerShellAccess() {
     const name = "powershell-exe";
     try {
-      const { stdout } = await execAsync('powershell.exe -Command "Write-Output test"', {
-        timeout: 5e3
-      });
+      const { stdout } = await execAsync(
+        'powershell.exe -Command "Write-Output test"',
+        {
+          timeout: 5e3
+        }
+      );
       if (stdout.trim() === "test") {
         return {
           name,
@@ -303,7 +395,9 @@ var DependencyChecker = class {
       if (!existsSync(this.cacheFile)) {
         return null;
       }
-      const cacheData = JSON.parse(await readFile(this.cacheFile, "utf8"));
+      const cacheData = JSON.parse(
+        await readFile(this.cacheFile, "utf8")
+      );
       return cacheData[checkName] || null;
     } catch {
       return null;
@@ -341,51 +435,9 @@ var DependencyChecker = class {
     }
   }
 };
-var BurntToastAutoInstaller = class {
-  async isInstalled() {
-    try {
-      const { stdout } = await execAsync(
-        'powershell.exe -Command "Get-Module -ListAvailable -Name BurntToast"',
-        { timeout: 1e4 }
-      );
-      return stdout.trim().length > 0 && !stdout.includes("No modules");
-    } catch {
-      return false;
-    }
-  }
-  async promptInstall() {
-    return true;
-  }
-  async install() {
-    try {
-      console.log("Installing BurntToast PowerShell module...");
-      const { stderr } = await execAsync(
-        'powershell.exe -Command "Install-Module BurntToast -Scope CurrentUser -Force -AllowClobber"',
-        { timeout: 6e4 }
-        // Allow up to 60 seconds for installation
-      );
-      if (stderr && !stderr.includes("WARNING")) {
-        throw new Error(`Installation failed: ${stderr}`);
-      }
-      console.log("BurntToast module installed successfully");
-    } catch (error) {
-      throw new Error(`Failed to install BurntToast: ${error instanceof Error ? error.message : error}`);
-    }
-  }
-  async verify() {
-    try {
-      const { stdout } = await execAsync(
-        'powershell.exe -Command "Import-Module BurntToast -ErrorAction Stop; Write-Output success"',
-        { timeout: 1e4 }
-      );
-      return stdout.trim() === "success";
-    } catch {
-      return false;
-    }
-  }
-};
 
 // src/cli.ts
+import { stream } from "@clack/prompts";
 var __dirname = fileURLToPath(new URL(".", import.meta.url));
 var packagePath = join2(__dirname, "..", "package.json");
 var packageJson = JSON.parse(readFileSync(packagePath, "utf8"));
@@ -423,13 +475,13 @@ function validateFlags(options) {
   }
   if (options.global && options.local) {
     console.error("Error: --global and --local flags cannot be used together");
-    process.exit(ExitCodes.USER_ABORT);
+    process2.exit(ExitCodes.USER_ABORT);
   }
   if (!options.notification && !options.stop) {
     console.error(
       "Error: At least one hook (--notification or --stop) must be enabled"
     );
-    process.exit(ExitCodes.USER_ABORT);
+    process2.exit(ExitCodes.USER_ABORT);
   }
   if (options.sync && !options.local) {
     console.error("Warning: --sync flag only applies to local installations");
@@ -460,7 +512,7 @@ MANUAL TESTING:
 
 For complete documentation: https://github.com/claudes-world/cctoast-wsl
 `);
-  process.exit(ExitCodes.SUCCESS);
+  process2.exit(ExitCodes.SUCCESS);
 }
 function formatOutput(data, useJson) {
   if (useJson) {
@@ -470,21 +522,21 @@ function formatOutput(data, useJson) {
   }
 }
 function isInteractive() {
-  return process.stdin.isTTY && process.stdout.isTTY;
+  return process2.stdin.isTTY && process2.stdout.isTTY;
 }
 function handleCancel() {
-  cancel("Operation cancelled by user");
-  process.exit(ExitCodes.USER_ABORT);
+  p.cancel("Operation cancelled by user");
+  process2.exit(ExitCodes.USER_ABORT);
 }
 async function runInteractiveMode() {
-  intro("\u{1F35E} cctoast-wsl Installation");
-  const scope = await select({
+  p.intro("\u{1F35E} cctoast-wsl Installation");
+  const scope = await p.select({
     message: "Choose installation scope:",
     options: [
       {
         value: "global",
         label: "Global",
-        hint: "Install to ~/.claude/ (recommended)"
+        hint: "\u2605 Recommended - Install to ~/.claude/"
       },
       {
         value: "local",
@@ -493,11 +545,11 @@ async function runInteractiveMode() {
       }
     ]
   });
-  if (isCancel(scope)) {
+  if (p.isCancel(scope)) {
     handleCancel();
   }
   const scopeValue = scope;
-  const hooks = await multiselect({
+  const hooks = await p.multiselect({
     message: "Select hooks to enable:",
     options: [
       {
@@ -514,16 +566,16 @@ async function runInteractiveMode() {
     initialValues: ["notification", "stop"],
     required: true
   });
-  if (isCancel(hooks)) {
+  if (p.isCancel(hooks)) {
     handleCancel();
   }
   let sync = false;
   if (scopeValue === "local") {
-    const syncResult = await confirm({
+    const syncResult = await p.confirm({
       message: "Modify tracked settings.json instead of settings.local.json?",
       initialValue: false
     });
-    if (isCancel(syncResult)) {
+    if (p.isCancel(syncResult)) {
       handleCancel();
     }
     sync = syncResult;
@@ -534,7 +586,7 @@ async function runInteractiveMode() {
     `Hooks: ${hooksList.join(", ")}`,
     ...scopeValue === "local" ? [`Sync: ${sync ? "yes" : "no"}`] : []
   ];
-  log.info(
+  p.log.info(
     `Configuration summary:
 ${summary.map((item) => `  \u2022 ${item}`).join("\n")}`
   );
@@ -556,16 +608,16 @@ This keeps Windows-specific configuration out of version control, ideal for cros
     configExplanation += "\nThe cctoast-wsl tool will install the necessary scripts and configuration for toast notifications in this project.";
   }
   if (configExplanation) {
-    log.message(configExplanation);
+    p.log.message(configExplanation);
   }
-  const proceed = await confirm({
+  const proceed = await p.confirm({
     message: "Proceed with installation?",
     initialValue: true
   });
-  if (isCancel(proceed) || !proceed) {
+  if (p.isCancel(proceed) || !proceed) {
     handleCancel();
   }
-  outro("Ready to install! \u{1F389}");
+  p.outro("Ready to install! \u{1F389}");
   return {
     global: scopeValue === "global",
     local: scopeValue === "local",
@@ -581,82 +633,32 @@ This keeps Windows-specific configuration out of version control, ideal for cros
   };
 }
 function setupSignalHandlers() {
-  process.on("SIGINT", () => {
-    cancel("\nOperation cancelled by user");
-    process.exit(ExitCodes.USER_ABORT);
+  process2.on("SIGINT", () => {
+    p.cancel("\nOperation cancelled by user");
+    process2.exit(ExitCodes.USER_ABORT);
   });
-  process.on("SIGTERM", () => {
-    cancel("\nOperation terminated");
-    process.exit(ExitCodes.USER_ABORT);
+  process2.on("SIGTERM", () => {
+    p.cancel("\nOperation terminated");
+    process2.exit(ExitCodes.USER_ABORT);
   });
 }
 async function runDependencyChecks(options) {
-  if (!options.quiet) {
-    console.log("\u{1F50D} Checking system dependencies...\n");
-  }
   const checker = new DependencyChecker(options.force);
-  const results = await checker.checkAll();
-  const fatalFailures = results.filter((r) => !r.passed && r.fatal);
-  const warnings = results.filter((r) => !r.passed && !r.fatal);
-  const passed = results.filter((r) => r.passed);
-  if (!options.quiet) {
-    passed.forEach((result) => {
-      console.log(`\u2705 ${result.message}`);
-    });
-    warnings.forEach((result) => {
-      console.log(`\u26A0\uFE0F  ${result.message}`);
-      if (result.remedy) {
-        console.log(`   \u{1F4A1} ${result.remedy}`);
-      }
-    });
-  }
-  if (fatalFailures.length > 0) {
-    if (!options.quiet) {
-      console.log("\n\u274C Fatal dependency checks failed:\n");
-      fatalFailures.forEach((result) => {
-        console.log(`   \u2022 ${result.message}`);
-        if (result.remedy) {
-          console.log(`     Fix: ${result.remedy}`);
-        }
-      });
-    }
-    const burntToastFailure = fatalFailures.find((r) => r.name === "burnttoast-module");
-    if (burntToastFailure && !options.quiet) {
-      const autoInstaller = new BurntToastAutoInstaller();
-      try {
-        console.log("\n\u{1F916} Auto-installation available for BurntToast module");
-        const consent = await confirm({
-          message: "Would you like to automatically install BurntToast PowerShell module?",
-          initialValue: true
-        });
-        if (isCancel(consent)) {
-          handleCancel();
-        }
-        if (consent) {
-          await autoInstaller.install();
-          if (await autoInstaller.verify()) {
-            console.log("\u2705 BurntToast module installed and verified successfully");
-            const remainingFailures = fatalFailures.filter((r) => r.name !== "burnttoast-module");
-            if (remainingFailures.length === 0) {
-              console.log("\n\u{1F389} All dependency checks now pass!");
-              return;
-            }
-          } else {
-            console.log("\u274C BurntToast installation verification failed");
-          }
-        }
-      } catch (error) {
-        console.log(`\u274C Auto-installation failed: ${error instanceof Error ? error.message : error}`);
+  const checkStream = async function* () {
+    yield import_picocolors.default.cyan("\u23F3 Starting dependency checks...");
+    const results = await checker.checkAll();
+    for (const r of results) {
+      if (r.passed) {
+        yield import_picocolors.default.green(`\u2714 ${r.message}`);
+      } else if (r.fatal) {
+        yield import_picocolors.default.red(`\u2716 ${r.message}`);
+      } else {
+        yield import_picocolors.default.yellow(`\u26A0\uFE0F  ${r.message}`);
       }
     }
-    if (!options.force || fatalFailures.some((r) => r.name === "burnttoast-module")) {
-      console.log("\n\u{1F4A1} Use --force to bypass non-fatal checks, but BurntToast is required");
-      process.exit(ExitCodes.DEPENDENCY_FAILURE);
-    }
-  }
-  if (!options.quiet && warnings.length === 0 && fatalFailures.length === 0) {
-    console.log("\n\u{1F389} All dependency checks passed!");
-  }
+    yield import_picocolors.default.cyan("\u2705 All dependency checks complete!");
+  }();
+  stream.info(checkStream);
 }
 function hasExplicitFlags(argv) {
   const flagsToCheck = [
@@ -688,7 +690,7 @@ async function main() {
       handlePrintInstructions();
       return;
     }
-    const shouldUseInteractive = !options.quiet && isInteractive() && !hasExplicitFlags(process.argv);
+    const shouldUseInteractive = !options.quiet && isInteractive() && !hasExplicitFlags(process2.argv);
     if (shouldUseInteractive) {
       options = await runInteractiveMode();
     } else {
@@ -731,7 +733,7 @@ async function main() {
       console.log(JSON.stringify(result, null, 2));
       const fatalFailures = depResults.filter((r) => !r.passed && r.fatal);
       if (fatalFailures.length > 0 && !options.force) {
-        process.exit(ExitCodes.DEPENDENCY_FAILURE);
+        process2.exit(ExitCodes.DEPENDENCY_FAILURE);
       }
     } else {
       await runDependencyChecks(options);
@@ -755,7 +757,9 @@ async function main() {
         }
       };
       formatOutput(result, false);
-      console.log("\n\u{1F389} Dependency Management System implemented successfully!");
+      console.log(
+        "\n\u{1F389} Dependency Management System implemented successfully!"
+      );
       console.log("\u{1F4CB} Installation logic will be added in Milestone 4");
     }
   } catch (error) {
@@ -763,13 +767,13 @@ async function main() {
       "Unexpected error:",
       error instanceof Error ? error.message : error
     );
-    process.exit(ExitCodes.IO_ERROR);
+    process2.exit(ExitCodes.IO_ERROR);
   }
 }
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === `file://${process2.argv[1]}`) {
   main().catch((error) => {
     console.error("Fatal error:", error);
-    process.exit(ExitCodes.IO_ERROR);
+    process2.exit(ExitCodes.IO_ERROR);
   });
 }
 export {
