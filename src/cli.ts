@@ -27,7 +27,9 @@ import * as p from '@clack/prompts';
 import color from 'picocolors';
 
 import { DependencyChecker, BurntToastAutoInstaller } from './dependencies.js';
+
 import { Installer } from './installer.js';
+
 
 // Get package.json for version info
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
@@ -643,6 +645,7 @@ async function main(): Promise<void> {
         console.error(`\n❌ ${errorMessage}`);
       }
       process.exit(ExitCodes.IO_ERROR);
+
     }
   } catch (error) {
     console.error(
