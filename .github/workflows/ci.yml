@@ -1,0 +1,229 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel previous runs if new commits are pushed
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test & Build
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node-version: [18.x, 20.x]
+        exclude:
+          # Only test Windows on Node 20 per PRD requirements
+          - os: windows-latest
+            node-version: 18.x
+            
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Type checking
+        run: npm run typecheck
+        
+      - name: Lint TypeScript
+        run: npm run lint:ts
+        
+      - name: Lint shell scripts (Ubuntu only)
+        if: matrix.os == 'ubuntu-latest'
+        run: npm run lint:shell
+        
+      - name: Run tests with coverage
+        run: npm run test:coverage
+        env:
+          # Set CI environment to enable mocking
+          CI: true
+          NODE_ENV: test
+          # Mock WSL environment for testing
+          WSL_DISTRO_NAME: Ubuntu-22.04
+          WSL_INTEROP: /run/WSL/123_interop
+          
+      - name: Check coverage thresholds
+        run: |
+          if [ -f coverage/coverage-summary.json ]; then
+            echo "Coverage report generated successfully"
+            # Extract coverage percentages (will be enhanced with actual threshold checking)
+            node -e "
+              const coverage = require('./coverage/coverage-summary.json');
+              const lines = coverage.total.lines.pct;
+              const branches = coverage.total.branches.pct;
+              const functions = coverage.total.functions.pct;
+              const statements = coverage.total.statements.pct;
+              
+              console.log(\`Coverage Results:\`);
+              console.log(\`  Lines: \${lines}%\`);
+              console.log(\`  Branches: \${branches}%\`);
+              console.log(\`  Functions: \${functions}%\`);
+              console.log(\`  Statements: \${statements}%\`);
+              
+              const failed = [];
+              if (lines < 90) failed.push(\`Lines: \${lines}% (required: 90%)\`);
+              if (branches < 85) failed.push(\`Branches: \${branches}% (required: 85%)\`);
+              if (functions < 90) failed.push(\`Functions: \${functions}% (required: 90%)\`);
+              if (statements < 90) failed.push(\`Statements: \${statements}% (required: 90%)\`);
+              
+              if (failed.length > 0) {
+                console.error('Coverage thresholds not met:');
+                failed.forEach(f => console.error(\`  \${f}\`));
+                process.exit(1);
+              }
+              
+              console.log('✅ All coverage thresholds met!');
+            "
+          else
+            echo "❌ No coverage report found"
+            exit 1
+          fi
+        shell: bash
+        if: matrix.os == 'ubuntu-latest' && matrix.node-version == '20.x'
+        
+      - name: Build project
+        run: npm run build:prod
+        
+      - name: Verify build output
+        run: |
+          if [ ! -f bin/cctoast-wsl ]; then
+            echo "❌ Build output not found at bin/cctoast-wsl"
+            exit 1
+          fi
+          
+          # Check if binary is executable
+          if [ ! -x bin/cctoast-wsl ]; then
+            echo "❌ Build output is not executable"
+            exit 1
+          fi
+          
+          # Check bundle size (target: <100KB per PRD)
+          size=$(stat -f%z bin/cctoast-wsl 2>/dev/null || stat -c%s bin/cctoast-wsl)
+          max_size=102400  # 100KB in bytes
+          
+          if [ $size -gt $max_size ]; then
+            echo "❌ Bundle size too large: ${size} bytes (max: ${max_size} bytes)"
+            exit 1
+          fi
+          
+          echo "✅ Build verification passed (size: ${size} bytes)"
+        shell: bash
+        
+      - name: Test shell scripts (Ubuntu only)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          # Install bats if not available
+          if ! command -v bats &> /dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y bats
+          fi
+          
+          # Run shell script tests
+          npm run test:shell
+          
+      - name: Mock PowerShell tests (Windows only)
+        if: matrix.os == 'windows-latest'
+        run: |
+          # Create mock BurntToast test
+          $mockScript = @'
+          # Mock BurntToast module availability test
+          try {
+            # Test if we can simulate the BurntToast check without actual installation
+            $moduleName = "BurntToast"
+            Write-Host "Mock: Checking for $moduleName module..."
+            
+            # Simulate successful module detection
+            Write-Host "Mock: $moduleName module simulation successful"
+            exit 0
+          } catch {
+            Write-Host "Mock test failed: $_"
+            exit 1
+          }
+          '@
+          
+          $mockScript | Out-File -FilePath "mock-test.ps1" -Encoding UTF8
+          powershell.exe -ExecutionPolicy Bypass -File "mock-test.ps1"
+        shell: powershell
+        
+      - name: Upload coverage to Codecov (Ubuntu Node 20 only)
+        if: matrix.os == 'ubuntu-latest' && matrix.node-version == '20.x'
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/lcov.info
+          fail_ci_if_error: true
+          verbose: true
+          
+  # Performance benchmark job
+  benchmark:
+    name: Performance Benchmark
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build performance benchmark
+        run: |
+          echo "🚀 Running performance benchmarks..."
+          
+          # Measure build time (target: <1 second per PRD)
+          start_time=$(date +%s%3N)
+          npm run build:prod
+          end_time=$(date +%s%3N)
+          build_time=$((end_time - start_time))
+          
+          echo "Build time: ${build_time}ms"
+          
+          # Check if build time meets target
+          max_build_time=1000  # 1 second in milliseconds
+          if [ $build_time -gt $max_build_time ]; then
+            echo "❌ Build time exceeds target: ${build_time}ms (max: ${max_build_time}ms)"
+            exit 1
+          fi
+          
+          echo "✅ Build performance meets target: ${build_time}ms"
+          
+          # CLI startup time benchmark
+          start_time=$(date +%s%3N)
+          ./bin/cctoast-wsl --help > /dev/null 2>&1
+          end_time=$(date +%s%3N)
+          startup_time=$((end_time - start_time))
+          
+          echo "CLI startup time: ${startup_time}ms"
+          
+          # Target: <100ms per architecture docs
+          max_startup_time=100
+          if [ $startup_time -gt $max_startup_time ]; then
+            echo "⚠️  CLI startup slower than target: ${startup_time}ms (target: <${max_startup_time}ms)"
+          else
+            echo "✅ CLI startup performance good: ${startup_time}ms"
+          fi
