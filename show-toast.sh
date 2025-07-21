@@ -3,7 +3,8 @@
 # Default values
 TITLE="Claude Code"
 MESSAGE="DONE"
-IMAGE_PATH="$HOME/Documents/Windows Terminal/claude-code.png"
+IMAGE_PATH="claude-code.png"
+IMAGE_PATH2="claude_app_icon.png"
 ATTRIBUTION="From PowerShell"
 
 # Escape single quotes for PowerShell single-quoted strings
@@ -40,15 +41,17 @@ done
 
 # Convert WSL path to Windows path
 WIN_IMAGE_PATH=$(wslpath -w "$IMAGE_PATH")
+WIN_IMAGE_PATH2=$(wslpath -w "$IMAGE_PATH2")
 
 ESC_TITLE=$(escape_ps "$TITLE")
 ESC_MESSAGE=$(escape_ps "$MESSAGE")
 ESC_ATTRIBUTION=$(escape_ps "$ATTRIBUTION")
 ESC_WIN_IMAGE_PATH=$(escape_ps "$WIN_IMAGE_PATH")
+ESC_WIN_IMAGE_PATH2=$(escape_ps "$WIN_IMAGE_PATH2")
 
 # PowerShell command
 powershell.exe -Command "
   \$img = '$ESC_WIN_IMAGE_PATH';
   Import-Module BurntToast;
-  New-BurntToastNotification -Text '$ESC_TITLE', '$ESC_MESSAGE' -AppLogo \$img -AttributionText '$ESC_ATTRIBUTION';
+  New-BurntToastNotification -Text '$ESC_TITLE', '$ESC_MESSAGE' -AppLogo \$img -UniqueIdentifier '$ESC_ATTRIBUTION' -HeroImage '$ESC_WIN_IMAGE_PATH2';
 "

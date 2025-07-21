@@ -1,0 +1,31 @@
+{
+  "cleanupPeriodDays": 150,
+  "env": {
+    "GH_USERNAME": "Agent:Claude-Do",
+    "GH_EMAIL": "claude@claude.do"
+  },
+  "hooks": {
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -Command \"Import-Module BurntToast; New-BurntToastNotification -Text 'Claude Code Notification', '$(cat | jq -r '.message' | sed 's/`/``/g; s/\\\\\\\"/``\\\\\\\"/g')'\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -Command \"Import-Module BurntToast; New-BurntToastNotification -Text 'Claude Code', 'DONE'\""
+          }
+        ]
+      }
+    ]
+  }
+}
