@@ -16,6 +16,42 @@ When working on this project, always consult these key documentation files:
 
 Always ensure implementations align with these specifications and follow the established patterns.
 
+## 🧪 Interactive Feature Testing Protocol
+
+**CRITICAL**: Before closing any milestone that includes interactive/TTY features, ALWAYS request user validation in a real terminal environment. The Claude Code environment cannot fully test interactive prompts, TTY detection, or terminal-specific behaviors.
+
+### When to Request User Testing
+- Interactive prompts (@clack/prompts)
+- TTY detection logic
+- Signal handling (Ctrl+C)
+- Color output
+- Progress indicators
+- Any feature that behaves differently in CI vs interactive environments
+
+### Testing Instructions Template
+When requesting user testing, provide specific instructions:
+1. **Commands to run**: Exact command-line invocations
+2. **Expected behavior**: What the user should see and experience
+3. **Edge cases**: Ctrl+C handling, invalid inputs, etc.
+4. **Environment notes**: WSL vs native terminal requirements
+
+### Testing Workflow:
+1. **Create** `PLEASE-TEST-<issue-number>.md` file with comprehensive test instructions
+2. **Request** user testing via issue comment with link to test file  
+3. **Wait** for user validation before closing milestone
+4. **Address** any issues found and re-test if needed
+
+### Example Files Created:
+- `PLEASE-TEST-3.md` - Interactive CLI mode validation for Milestone 2
+- Future: `PLEASE-TEST-X.md` - BurntToast integration, PowerShell execution, etc.
+
+### Standard Test File Sections:
+- Environment requirements
+- Pre-test setup commands  
+- Numbered test cases with ✅/❌ reporting
+- Visual quality assessment
+- Clear result reporting format
+
 ## Project Overview
 
 cctoast-wsl is a utility that enables Windows toast notifications with sounds, messages, titles, and images from inside WSL for Claude Code hooks. It bridges WSL and Windows using PowerShell's BurntToast module.

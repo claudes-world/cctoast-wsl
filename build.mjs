@@ -18,7 +18,7 @@ const buildConfig = {
   minify: isProduction,
   treeShaking: true,
   metafile: true, // Enable metafile for bundle analysis
-  external: [], // Bundle all dependencies for CLI portability
+  external: ['commander', '@clack/prompts'], // Keep dependencies external for now
   define: {
     'process.env.NODE_ENV': JSON.stringify(
       process.env.NODE_ENV || 'development'
