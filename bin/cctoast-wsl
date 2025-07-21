@@ -5,11 +5,389 @@
 import { Command } from "commander";
 import process from "node:process";
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { join as join2 } from "node:path";
 import { fileURLToPath } from "node:url";
-import { intro, outro, select, multiselect, confirm, isCancel, cancel, log } from "@clack/prompts";
+import {
+  intro,
+  outro,
+  select,
+  multiselect,
+  confirm,
+  isCancel,
+  cancel,
+  log
+} from "@clack/prompts";
+
+// src/dependencies.ts
+import { exec } from "node:child_process";
+import { promisify } from "node:util";
+import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+import { homedir } from "node:os";
+var execAsync = promisify(exec);
+var DependencyChecker = class {
+  // 24 hours
+  constructor(_forceRefresh = false) {
+    this._forceRefresh = _forceRefresh;
+  }
+  cacheDir = join(homedir(), ".cache", "cctoast-wsl");
+  cacheFile = join(this.cacheDir, "checks.json");
+  cacheTimeoutMs = 24 * 60 * 60 * 1e3;
+  /**
+   * Check all dependencies with caching
+   */
+  async checkAll() {
+    const checks = [
+      () => this.checkWSLEnvironment(),
+      () => this.checkPowerShellAccess(),
+      () => this.checkBurntToast(),
+      () => this.checkJqBinary(),
+      () => this.checkClaudeDirectory()
+    ];
+    const results = [];
+    for (const check of checks) {
+      try {
+        const result = await this.runWithCache(check);
+        results.push(result);
+      } catch (error) {
+        const errorResult = {
+          name: "unknown",
+          passed: false,
+          fatal: true,
+          message: `Check failed: ${error instanceof Error ? error.message : error}`,
+          timestamp: Date.now()
+        };
+        results.push(errorResult);
+      }
+    }
+    await this.saveCache(results);
+    return results;
+  }
+  /**
+   * Check WSL environment (fatal)
+   */
+  async checkWSLEnvironment() {
+    const name = "wsl-environment";
+    try {
+      const procVersion = await readFile("/proc/version", "utf8");
+      const isWSL1 = procVersion.includes("Microsoft");
+      const isWSL2 = procVersion.includes("WSL2") || procVersion.includes("microsoft-standard");
+      if (isWSL1 || isWSL2) {
+        return {
+          name,
+          passed: true,
+          fatal: true,
+          message: `Detected ${isWSL2 ? "WSL2" : "WSL1"} environment`,
+          timestamp: Date.now()
+        };
+      } else {
+        return {
+          name,
+          passed: false,
+          fatal: true,
+          message: "Not running in WSL environment",
+          remedy: "Run inside Windows Subsystem for Linux (WSL)",
+          timestamp: Date.now()
+        };
+      }
+    } catch {
+      return {
+        name,
+        passed: false,
+        fatal: true,
+        message: "Unable to detect WSL environment",
+        remedy: "Ensure you are running inside WSL",
+        timestamp: Date.now()
+      };
+    }
+  }
+  /**
+   * Check PowerShell.exe accessibility (fatal)
+   */
+  async checkPowerShellAccess() {
+    const name = "powershell-exe";
+    try {
+      const { stdout } = await execAsync('powershell.exe -Command "Write-Output test"', {
+        timeout: 5e3
+      });
+      if (stdout.trim() === "test") {
+        return {
+          name,
+          passed: true,
+          fatal: true,
+          message: "PowerShell.exe accessible and functional",
+          timestamp: Date.now()
+        };
+      } else {
+        return {
+          name,
+          passed: false,
+          fatal: true,
+          message: "PowerShell.exe not responding correctly",
+          remedy: "Add Windows PowerShell to PATH or check WSL interop settings",
+          timestamp: Date.now()
+        };
+      }
+    } catch {
+      return {
+        name,
+        passed: false,
+        fatal: true,
+        message: "PowerShell.exe not accessible from PATH",
+        remedy: 'Add Windows PowerShell to PATH: export PATH="$PATH:/mnt/c/Windows/System32/WindowsPowerShell/v1.0"',
+        timestamp: Date.now()
+      };
+    }
+  }
+  /**
+   * Check BurntToast module (fatal, but auto-installable)
+   */
+  async checkBurntToast() {
+    const name = "burnttoast-module";
+    try {
+      const { stdout } = await execAsync(
+        'powershell.exe -Command "Get-Module -ListAvailable -Name BurntToast | Select-Object Version"',
+        { timeout: 1e4 }
+      );
+      if (stdout.trim() && !stdout.includes("No modules")) {
+        const versionMatch = stdout.match(/(\d+\.\d+\.\d+)/);
+        const version = versionMatch ? versionMatch[1] : "unknown";
+        return {
+          name,
+          passed: true,
+          fatal: true,
+          message: `BurntToast module installed (version ${version})`,
+          timestamp: Date.now()
+        };
+      } else {
+        return {
+          name,
+          passed: false,
+          fatal: true,
+          message: "BurntToast PowerShell module not installed",
+          remedy: "Install-Module BurntToast -Scope CurrentUser -Force",
+          timestamp: Date.now()
+        };
+      }
+    } catch {
+      return {
+        name,
+        passed: false,
+        fatal: true,
+        message: "Unable to check BurntToast module availability",
+        remedy: "Check PowerShell execution policy and install: Install-Module BurntToast -Scope CurrentUser -Force",
+        timestamp: Date.now()
+      };
+    }
+  }
+  /**
+   * Check PowerShell execution policy (warning only)
+   */
+  async checkExecutionPolicy() {
+    const name = "execution-policy";
+    try {
+      const { stdout } = await execAsync(
+        'powershell.exe -Command "Get-ExecutionPolicy"',
+        { timeout: 5e3 }
+      );
+      const policy = stdout.trim();
+      const restrictivePolicies = ["Restricted", "AllSigned"];
+      if (restrictivePolicies.includes(policy)) {
+        return {
+          name,
+          passed: false,
+          fatal: false,
+          message: `PowerShell execution policy is restrictive: ${policy}`,
+          remedy: "Set-ExecutionPolicy -Scope CurrentUser RemoteSigned",
+          timestamp: Date.now()
+        };
+      } else {
+        return {
+          name,
+          passed: true,
+          fatal: false,
+          message: `PowerShell execution policy: ${policy}`,
+          timestamp: Date.now()
+        };
+      }
+    } catch {
+      return {
+        name,
+        passed: false,
+        fatal: false,
+        message: "Unable to check PowerShell execution policy",
+        remedy: "Check PowerShell access and consider setting: Set-ExecutionPolicy -Scope CurrentUser RemoteSigned",
+        timestamp: Date.now()
+      };
+    }
+  }
+  /**
+   * Check jq binary availability (optional)
+   */
+  async checkJqBinary() {
+    const name = "jq-binary";
+    try {
+      await execAsync("command -v jq", { timeout: 2e3 });
+      return {
+        name,
+        passed: true,
+        fatal: false,
+        message: "jq binary available",
+        timestamp: Date.now()
+      };
+    } catch {
+      return {
+        name,
+        passed: false,
+        fatal: false,
+        message: "jq binary not found",
+        remedy: "Install jq: sudo apt-get install jq (Ubuntu/Debian) or brew install jq (macOS)",
+        timestamp: Date.now()
+      };
+    }
+  }
+  /**
+   * Check Claude directory exists (warning only)
+   */
+  async checkClaudeDirectory() {
+    const name = "claude-directory";
+    const globalClaudeDir = join(homedir(), ".claude");
+    try {
+      if (existsSync(globalClaudeDir)) {
+        return {
+          name,
+          passed: true,
+          fatal: false,
+          message: "Claude directory exists",
+          timestamp: Date.now()
+        };
+      } else {
+        return {
+          name,
+          passed: false,
+          fatal: false,
+          message: "Claude directory not found",
+          remedy: "Install Claude Code first, or hooks will not function until Claude is installed",
+          timestamp: Date.now()
+        };
+      }
+    } catch {
+      return {
+        name,
+        passed: false,
+        fatal: false,
+        message: "Unable to check Claude directory",
+        remedy: "Ensure Claude Code is properly installed",
+        timestamp: Date.now()
+      };
+    }
+  }
+  /**
+   * Run a check function with caching support
+   */
+  async runWithCache(checkFn) {
+    if (!this._forceRefresh) {
+      const cachedResult = await this.getCachedResult(checkFn.name);
+      if (cachedResult && this.isCacheValid(cachedResult)) {
+        return cachedResult;
+      }
+    }
+    return await checkFn();
+  }
+  /**
+   * Get cached result for a specific check
+   */
+  async getCachedResult(checkName) {
+    try {
+      if (!existsSync(this.cacheFile)) {
+        return null;
+      }
+      const cacheData = JSON.parse(await readFile(this.cacheFile, "utf8"));
+      return cacheData[checkName] || null;
+    } catch {
+      return null;
+    }
+  }
+  /**
+   * Check if cached result is still valid (within 24h)
+   */
+  isCacheValid(result) {
+    const age = Date.now() - result.timestamp;
+    return age < this.cacheTimeoutMs;
+  }
+  /**
+   * Save check results to cache
+   */
+  async saveCache(results) {
+    try {
+      await mkdir(this.cacheDir, { recursive: true });
+      let cacheData = {};
+      if (existsSync(this.cacheFile)) {
+        try {
+          cacheData = JSON.parse(await readFile(this.cacheFile, "utf8"));
+        } catch {
+          cacheData = {};
+        }
+      }
+      for (const result of results) {
+        cacheData[result.name] = result;
+      }
+      const tempFile = `${this.cacheFile}.tmp`;
+      await writeFile(tempFile, JSON.stringify(cacheData, null, 2));
+      await execAsync(`mv "${tempFile}" "${this.cacheFile}"`);
+    } catch (error) {
+      console.warn("Failed to save dependency check cache:", error);
+    }
+  }
+};
+var BurntToastAutoInstaller = class {
+  async isInstalled() {
+    try {
+      const { stdout } = await execAsync(
+        'powershell.exe -Command "Get-Module -ListAvailable -Name BurntToast"',
+        { timeout: 1e4 }
+      );
+      return stdout.trim().length > 0 && !stdout.includes("No modules");
+    } catch {
+      return false;
+    }
+  }
+  async promptInstall() {
+    return true;
+  }
+  async install() {
+    try {
+      console.log("Installing BurntToast PowerShell module...");
+      const { stderr } = await execAsync(
+        'powershell.exe -Command "Install-Module BurntToast -Scope CurrentUser -Force -AllowClobber"',
+        { timeout: 6e4 }
+        // Allow up to 60 seconds for installation
+      );
+      if (stderr && !stderr.includes("WARNING")) {
+        throw new Error(`Installation failed: ${stderr}`);
+      }
+      console.log("BurntToast module installed successfully");
+    } catch (error) {
+      throw new Error(`Failed to install BurntToast: ${error instanceof Error ? error.message : error}`);
+    }
+  }
+  async verify() {
+    try {
+      const { stdout } = await execAsync(
+        'powershell.exe -Command "Import-Module BurntToast -ErrorAction Stop; Write-Output success"',
+        { timeout: 1e4 }
+      );
+      return stdout.trim() === "success";
+    } catch {
+      return false;
+    }
+  }
+};
+
+// src/cli.ts
 var __dirname = fileURLToPath(new URL(".", import.meta.url));
-var packagePath = join(__dirname, "..", "package.json");
+var packagePath = join2(__dirname, "..", "package.json");
 var packageJson = JSON.parse(readFileSync(packagePath, "utf8"));
 var ExitCodes = {
   SUCCESS: 0,
@@ -19,11 +397,23 @@ var ExitCodes = {
 };
 function initializeCLI() {
   const program = new Command();
-  program.name("cctoast-wsl").description("Secure, zero-admin utility for Windows toast notifications from WSL via Claude Code hooks").version(packageJson.version, "-v, --version", "Display version number");
-  program.option("-g, --global", "Install to ~/.claude/... (default)").option("-l, --local", "Install to .claude/...").addHelpText("after", "\nScope Options:\n  Only one of --global or --local can be specified");
+  program.name("cctoast-wsl").description(
+    "Secure, zero-admin utility for Windows toast notifications from WSL via Claude Code hooks"
+  ).version(packageJson.version, "-v, --version", "Display version number");
+  program.option("-g, --global", "Install for user to ~/.claude/... (default)").option("-l, --local", "Install for project to .claude/...").addHelpText(
+    "after",
+    "\nScope Options:\n  Only one of --global or --local can be specified"
+  );
   program.option("--notification", "Include Notification hook (default)", true).option("--no-notification", "Exclude Notification hook").option("--stop", "Include Stop hook (default)", true).option("--no-stop", "Exclude Stop hook");
-  program.option("--sync", "When local, modify tracked settings.json instead of settings.local.json", false);
-  program.option("-p, --print-instructions", "Show usage instructions and exit").option("--json", "Machine-readable JSON output", false).option("-n, --dry-run", "Preview changes without writing files").option("-f, --force", "Bypass failed dependency checks (except BurntToast)").option("-q, --quiet", "Suppress interactive prompts for CI environments");
+  program.option(
+    "--sync",
+    "When local, modify tracked settings.json instead of settings.local.json (not recommended for teams due to Windows-only nature of hooks)",
+    false
+  );
+  program.option("-p, --print-instructions", "Show usage instructions and exit").option("--json", "Machine-readable JSON output", false).option("-n, --dry-run", "Preview changes without writing files").option(
+    "-f, --force",
+    "Bypass failed dependency checks (except BurntToast)"
+  ).option("-q, --quiet", "Suppress interactive prompts for CI environments");
   program.option("--uninstall", "Remove cctoast-wsl installation");
   return program;
 }
@@ -36,7 +426,9 @@ function validateFlags(options) {
     process.exit(ExitCodes.USER_ABORT);
   }
   if (!options.notification && !options.stop) {
-    console.error("Error: At least one hook (--notification or --stop) must be enabled");
+    console.error(
+      "Error: At least one hook (--notification or --stop) must be enabled"
+    );
     process.exit(ExitCodes.USER_ABORT);
   }
   if (options.sync && !options.local) {
@@ -142,8 +534,30 @@ async function runInteractiveMode() {
     `Hooks: ${hooksList.join(", ")}`,
     ...scopeValue === "local" ? [`Sync: ${sync ? "yes" : "no"}`] : []
   ];
-  log.info(`Configuration summary:
-${summary.map((item) => `  \u2022 ${item}`).join("\n")}`);
+  log.info(
+    `Configuration summary:
+${summary.map((item) => `  \u2022 ${item}`).join("\n")}`
+  );
+  let configExplanation = "";
+  if (scopeValue === "global") {
+    configExplanation = `
+Hooks for ${hooksList.map((h) => h.charAt(0).toUpperCase() + h.slice(1)).join(" and ")} will be added to your global settings at ~/.claude/settings.json.
+The cctoast-wsl tool will install the necessary scripts and configuration for Windows toast notifications, available to all WSL sessions for your user.`;
+  } else if (scopeValue === "local") {
+    if (sync) {
+      configExplanation = `
+Hooks for ${hooksList.map((h) => h.charAt(0).toUpperCase() + h.slice(1)).join(" and ")} will be added to your project's tracked settings at ./.claude/settings.json.
+This will update the main project settings (recommended only if your team is Windows-only).`;
+    } else {
+      configExplanation = `
+Hooks for ${hooksList.map((h) => h.charAt(0).toUpperCase() + h.slice(1)).join(" and ")} will be added to your local-only settings at ./.claude/settings.local.json.
+This keeps Windows-specific configuration out of version control, ideal for cross-platform teams.`;
+    }
+    configExplanation += "\nThe cctoast-wsl tool will install the necessary scripts and configuration for toast notifications in this project.";
+  }
+  if (configExplanation) {
+    log.message(configExplanation);
+  }
   const proceed = await confirm({
     message: "Proceed with installation?",
     initialValue: true
@@ -175,6 +589,74 @@ function setupSignalHandlers() {
     cancel("\nOperation terminated");
     process.exit(ExitCodes.USER_ABORT);
   });
+}
+async function runDependencyChecks(options) {
+  if (!options.quiet) {
+    console.log("\u{1F50D} Checking system dependencies...\n");
+  }
+  const checker = new DependencyChecker(options.force);
+  const results = await checker.checkAll();
+  const fatalFailures = results.filter((r) => !r.passed && r.fatal);
+  const warnings = results.filter((r) => !r.passed && !r.fatal);
+  const passed = results.filter((r) => r.passed);
+  if (!options.quiet) {
+    passed.forEach((result) => {
+      console.log(`\u2705 ${result.message}`);
+    });
+    warnings.forEach((result) => {
+      console.log(`\u26A0\uFE0F  ${result.message}`);
+      if (result.remedy) {
+        console.log(`   \u{1F4A1} ${result.remedy}`);
+      }
+    });
+  }
+  if (fatalFailures.length > 0) {
+    if (!options.quiet) {
+      console.log("\n\u274C Fatal dependency checks failed:\n");
+      fatalFailures.forEach((result) => {
+        console.log(`   \u2022 ${result.message}`);
+        if (result.remedy) {
+          console.log(`     Fix: ${result.remedy}`);
+        }
+      });
+    }
+    const burntToastFailure = fatalFailures.find((r) => r.name === "burnttoast-module");
+    if (burntToastFailure && !options.quiet) {
+      const autoInstaller = new BurntToastAutoInstaller();
+      try {
+        console.log("\n\u{1F916} Auto-installation available for BurntToast module");
+        const consent = await confirm({
+          message: "Would you like to automatically install BurntToast PowerShell module?",
+          initialValue: true
+        });
+        if (isCancel(consent)) {
+          handleCancel();
+        }
+        if (consent) {
+          await autoInstaller.install();
+          if (await autoInstaller.verify()) {
+            console.log("\u2705 BurntToast module installed and verified successfully");
+            const remainingFailures = fatalFailures.filter((r) => r.name !== "burnttoast-module");
+            if (remainingFailures.length === 0) {
+              console.log("\n\u{1F389} All dependency checks now pass!");
+              return;
+            }
+          } else {
+            console.log("\u274C BurntToast installation verification failed");
+          }
+        }
+      } catch (error) {
+        console.log(`\u274C Auto-installation failed: ${error instanceof Error ? error.message : error}`);
+      }
+    }
+    if (!options.force || fatalFailures.some((r) => r.name === "burnttoast-module")) {
+      console.log("\n\u{1F4A1} Use --force to bypass non-fatal checks, but BurntToast is required");
+      process.exit(ExitCodes.DEPENDENCY_FAILURE);
+    }
+  }
+  if (!options.quiet && warnings.length === 0 && fatalFailures.length === 0) {
+    console.log("\n\u{1F389} All dependency checks passed!");
+  }
 }
 function hasExplicitFlags(argv) {
   const flagsToCheck = [
@@ -212,32 +694,75 @@ async function main() {
     } else {
       validateFlags(options);
     }
-    const result = {
-      action: options.uninstall ? "uninstall" : "install",
-      scope: options.local ? "local" : "global",
-      hooks: {
-        notification: options.notification,
-        stop: options.stop
-      },
-      settings: {
-        sync: options.sync,
-        dryRun: options.dryRun,
-        force: options.force,
-        quiet: options.quiet
+    if (options.json) {
+      const checker = new DependencyChecker(options.force);
+      const depResults = await checker.checkAll();
+      const result = {
+        action: options.uninstall ? "uninstall" : "install",
+        scope: options.local ? "local" : "global",
+        hooks: {
+          notification: options.notification,
+          stop: options.stop
+        },
+        settings: {
+          sync: options.sync,
+          dryRun: options.dryRun,
+          force: options.force,
+          quiet: options.quiet
+        },
+        dependencies: {
+          timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+          results: depResults.map((r) => ({
+            name: r.name,
+            passed: r.passed,
+            fatal: r.fatal,
+            message: r.message,
+            remedy: r.remedy
+          })),
+          summary: {
+            total: depResults.length,
+            passed: depResults.filter((r) => r.passed).length,
+            failed: depResults.filter((r) => !r.passed).length,
+            fatal: depResults.filter((r) => !r.passed && r.fatal).length,
+            warnings: depResults.filter((r) => !r.passed && !r.fatal).length
+          }
+        }
+      };
+      console.log(JSON.stringify(result, null, 2));
+      const fatalFailures = depResults.filter((r) => !r.passed && r.fatal);
+      if (fatalFailures.length > 0 && !options.force) {
+        process.exit(ExitCodes.DEPENDENCY_FAILURE);
       }
-    };
-    if (options.dryRun) {
-      console.log("DRY RUN MODE - No files will be modified\n");
+    } else {
+      await runDependencyChecks(options);
     }
-    if (!shouldUseInteractive) {
-      formatOutput(result, options.json);
+    if (options.dryRun && !options.json) {
+      console.log("\n\u{1F4CB} DRY RUN MODE - No files will be modified");
     }
     if (!options.json && !shouldUseInteractive) {
-      console.log("\nCLI Framework implemented successfully!");
-      console.log("Installation logic will be added in Milestone 4");
+      const result = {
+        action: options.uninstall ? "uninstall" : "install",
+        scope: options.local ? "local" : "global",
+        hooks: {
+          notification: options.notification,
+          stop: options.stop
+        },
+        settings: {
+          sync: options.sync,
+          dryRun: options.dryRun,
+          force: options.force,
+          quiet: options.quiet
+        }
+      };
+      formatOutput(result, false);
+      console.log("\n\u{1F389} Dependency Management System implemented successfully!");
+      console.log("\u{1F4CB} Installation logic will be added in Milestone 4");
     }
   } catch (error) {
-    console.error("Unexpected error:", error instanceof Error ? error.message : error);
+    console.error(
+      "Unexpected error:",
+      error instanceof Error ? error.message : error
+    );
     process.exit(ExitCodes.IO_ERROR);
   }
 }
