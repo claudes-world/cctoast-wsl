@@ -188,13 +188,57 @@ gh issue comment <number> --body "Progress update: [details]"
 
 See @docs/PROJECT_MANAGEMENT.md for complete workflow details.
 
-## Git Worktree for Multi-Agent Development
+## 🚨 MANDATORY LLM Agent Workflow Requirements
 
-When multiple LLM agents work simultaneously, create isolated worktrees to avoid branch conflicts:
+### **ALWAYS Use Git Worktree**
+**CRITICAL**: LLM agents MUST create isolated worktrees before starting any work to prevent conflicts:
+
 ```bash
-git worktree add worktree-issue5 feat/5-installation-engine
-cd worktree-issue5
+# Navigate to main project directory 
+cd /path/to/cctoast-wsl
+
+# Get the absolute latest code from remote
+git fetch origin
+
+# Create worktree from latest remote main
+git worktree add worktree-issue<NUMBER> origin/main
+cd worktree-issue<NUMBER>
+
+# Create your feature branch
+git checkout -b feat/<issue-number>-<description>
 ```
+
+### **ALWAYS Manage Issue Assignment**
+**REQUIRED**: Proper issue assignment prevents multiple agents working on the same task:
+
+```bash
+# Before starting work - assign to yourself
+gh issue edit <issue-number> --add-assignee @me
+
+# Find available work (not assigned)
+gh issue list --assignee "" --state open
+
+# Check what you're currently assigned to
+gh issue list --assignee "@me"
+```
+
+### **Quick Reference for LLM Agents**
+```bash
+# 1. Find available issue
+gh issue list --assignee "" --state open
+
+# 2. Set up worktree (get latest code first)
+git fetch origin && git worktree add worktree-issue<N> origin/main && cd worktree-issue<N>
+
+# 3. Assign issue and create branch
+gh issue edit <N> --add-assignee @me
+git checkout -b feat/<N>-<description>
+
+# 4. Notify start of work
+gh issue comment <N> --body "🚧 Starting work in worktree-issue<N>"
+```
+
+**See @docs/PROJECT_MANAGEMENT.md for complete workflow details.**
 
 ## Best Practices and Guidelines
 
