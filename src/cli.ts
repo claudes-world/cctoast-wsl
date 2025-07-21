@@ -20,6 +20,7 @@ import {
   cancel,
   log,
 } from '@clack/prompts';
+import { DependencyChecker, BurntToastAutoInstaller } from './dependencies.js';
 
 // Get package.json for version info
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
@@ -80,8 +81,8 @@ function initializeCLI(): Command {
 
   // Installation scope flags (mutually exclusive)
   program
-    .option('-g, --global', 'Install to ~/.claude/... (default)')
-    .option('-l, --local', 'Install to .claude/...')
+    .option('-g, --global', 'Install for user to ~/.claude/... (default)')
+    .option('-l, --local', 'Install for project to .claude/...')
     .addHelpText(
       'after',
       '\nScope Options:\n  Only one of --global or --local can be specified'
@@ -97,7 +98,7 @@ function initializeCLI(): Command {
   // Installation behavior flags
   program.option(
     '--sync',
-    'When local, modify tracked settings.json instead of settings.local.json',
+    'When local, modify tracked settings.json instead of settings.local.json (not recommended for teams due to Windows-only nature of hooks)',
     false
   );
 
@@ -282,6 +283,31 @@ async function runInteractiveMode(): Promise<CliOptions> {
     `Configuration summary:\n${summary.map(item => `  • ${item}`).join('\n')}`
   );
 
+  // Add descriptive explanation based on config
+  let configExplanation = '';
+  if (scopeValue === 'global') {
+    configExplanation =
+      `\nHooks for ${hooksList.map(h => h.charAt(0).toUpperCase() + h.slice(1)).join(' and ')} will be added to your global settings at ~/.claude/settings.json.\n` +
+      'The cctoast-wsl tool will install the necessary scripts and configuration for Windows toast notifications, available to all WSL sessions for your user.';
+  } else if (scopeValue === 'local') {
+    if (sync) {
+      configExplanation =
+        `\nHooks for ${hooksList.map(h => h.charAt(0).toUpperCase() + h.slice(1)).join(' and ')} will be added to your project's tracked settings at ./.claude/settings.json.\n` +
+        'This will update the main project settings (recommended only if your team is Windows-only).';
+    } else {
+      configExplanation =
+        `\nHooks for ${hooksList.map(h => h.charAt(0).toUpperCase() + h.slice(1)).join(' and ')} will be added to your local-only settings at ./.claude/settings.local.json.\n` +
+        'This keeps Windows-specific configuration out of version control, ideal for cross-platform teams.';
+    }
+    configExplanation +=
+      '\nThe cctoast-wsl tool will install the necessary scripts and configuration for toast notifications in this project.';
+  }
+  // TODO: After pre-flight checks, improve this message to be more precise, descriptive, and better formatted/worded.
+  // Consider including actual file paths, resolved hook actions, and a summary of what will happen next.
+  if (configExplanation) {
+    log.message(configExplanation);
+  }
+
   const proceed = await confirm({
     message: 'Proceed with installation?',
     initialValue: true,
@@ -321,6 +347,114 @@ function setupSignalHandlers(): void {
     cancel('\nOperation terminated');
     process.exit(ExitCodes.USER_ABORT);
   });
+}
+
+/**
+ * Run dependency checks with user-friendly output
+ */
+async function runDependencyChecks(options: CliOptions): Promise<void> {
+  if (!options.quiet) {
+    console.log('🔍 Checking system dependencies...\n');
+  }
+
+  const checker = new DependencyChecker(options.force);
+  const results = await checker.checkAll();
+
+  // Separate fatal and non-fatal failures
+  const fatalFailures = results.filter(r => !r.passed && r.fatal);
+  const warnings = results.filter(r => !r.passed && !r.fatal);
+  const passed = results.filter(r => r.passed);
+
+  // Display results
+  if (!options.quiet) {
+    // Show passed checks
+    passed.forEach(result => {
+      console.log(`✅ ${result.message}`);
+    });
+
+    // Show warnings
+    warnings.forEach(result => {
+      console.log(`⚠️  ${result.message}`);
+      if (result.remedy) {
+        console.log(`   💡 ${result.remedy}`);
+      }
+    });
+  }
+
+  // Handle fatal failures
+  if (fatalFailures.length > 0) {
+    if (!options.quiet) {
+      console.log('\n❌ Fatal dependency checks failed:\n');
+
+      fatalFailures.forEach(result => {
+        console.log(`   • ${result.message}`);
+        if (result.remedy) {
+          console.log(`     Fix: ${result.remedy}`);
+        }
+      });
+    }
+
+    // Special handling for BurntToast - offer auto-install
+    const burntToastFailure = fatalFailures.find(
+      r => r.name === 'burnttoast-module'
+    );
+    if (burntToastFailure && !options.quiet) {
+      const autoInstaller = new BurntToastAutoInstaller();
+
+      try {
+        console.log('\n🤖 Auto-installation available for BurntToast module');
+        const consent = await confirm({
+          message:
+            'Would you like to automatically install BurntToast PowerShell module?',
+          initialValue: true,
+        });
+
+        if (isCancel(consent)) {
+          handleCancel();
+        }
+
+        if (consent) {
+          await autoInstaller.install();
+
+          // Verify installation
+          if (await autoInstaller.verify()) {
+            console.log(
+              '✅ BurntToast module installed and verified successfully'
+            );
+
+            // Remove BurntToast from fatal failures
+            const remainingFailures = fatalFailures.filter(
+              r => r.name !== 'burnttoast-module'
+            );
+            if (remainingFailures.length === 0) {
+              console.log('\n🎉 All dependency checks now pass!');
+              return;
+            }
+          } else {
+            console.log('❌ BurntToast installation verification failed');
+          }
+        }
+      } catch (error) {
+        console.log(
+          `❌ Auto-installation failed: ${error instanceof Error ? error.message : error}`
+        );
+      }
+    }
+
+    if (
+      !options.force ||
+      fatalFailures.some(r => r.name === 'burnttoast-module')
+    ) {
+      console.log(
+        '\n💡 Use --force to bypass non-fatal checks, but BurntToast is required'
+      );
+      process.exit(ExitCodes.DEPENDENCY_FAILURE);
+    }
+  }
+
+  if (!options.quiet && warnings.length === 0 && fatalFailures.length === 0) {
+    console.log('\n🎉 All dependency checks passed!');
+  }
 }
 
 /**
@@ -378,34 +512,82 @@ async function main(): Promise<void> {
       validateFlags(options);
     }
 
-    // For now, just show the parsed options (implementation will come in later milestones)
-    const result = {
-      action: options.uninstall ? 'uninstall' : 'install',
-      scope: options.local ? 'local' : 'global',
-      hooks: {
-        notification: options.notification,
-        stop: options.stop,
-      },
-      settings: {
-        sync: options.sync,
-        dryRun: options.dryRun,
-        force: options.force,
-        quiet: options.quiet,
-      },
-    };
+    // Run dependency checks (Milestone 3)
+    if (options.json) {
+      // For JSON output, run checks silently and include in output
+      const checker = new DependencyChecker(options.force);
+      const depResults = await checker.checkAll();
 
-    if (options.dryRun) {
-      console.log('DRY RUN MODE - No files will be modified\n');
+      const result = {
+        action: options.uninstall ? 'uninstall' : 'install',
+        scope: options.local ? 'local' : 'global',
+        hooks: {
+          notification: options.notification,
+          stop: options.stop,
+        },
+        settings: {
+          sync: options.sync,
+          dryRun: options.dryRun,
+          force: options.force,
+          quiet: options.quiet,
+        },
+        dependencies: {
+          timestamp: new Date().toISOString(),
+          results: depResults.map(r => ({
+            name: r.name,
+            passed: r.passed,
+            fatal: r.fatal,
+            message: r.message,
+            remedy: r.remedy,
+          })),
+          summary: {
+            total: depResults.length,
+            passed: depResults.filter(r => r.passed).length,
+            failed: depResults.filter(r => !r.passed).length,
+            fatal: depResults.filter(r => !r.passed && r.fatal).length,
+            warnings: depResults.filter(r => !r.passed && !r.fatal).length,
+          },
+        },
+      };
+
+      console.log(JSON.stringify(result, null, 2));
+
+      // Exit with appropriate code if dependencies failed
+      const fatalFailures = depResults.filter(r => !r.passed && r.fatal);
+      if (fatalFailures.length > 0 && !options.force) {
+        process.exit(ExitCodes.DEPENDENCY_FAILURE);
+      }
+    } else {
+      // Run dependency checks with user interaction
+      await runDependencyChecks(options);
     }
 
-    if (!shouldUseInteractive) {
-      formatOutput(result, options.json);
+    if (options.dryRun && !options.json) {
+      console.log('\n📋 DRY RUN MODE - No files will be modified');
     }
 
     // TODO: Implement actual installation/uninstallation logic in later milestones
     if (!options.json && !shouldUseInteractive) {
-      console.log('\nCLI Framework implemented successfully!');
-      console.log('Installation logic will be added in Milestone 4');
+      const result: InstallationResult = {
+        action: options.uninstall ? 'uninstall' : 'install',
+        scope: options.local ? 'local' : 'global',
+        hooks: {
+          notification: options.notification,
+          stop: options.stop,
+        },
+        settings: {
+          sync: options.sync,
+          dryRun: options.dryRun,
+          force: options.force,
+          quiet: options.quiet,
+        },
+      };
+
+      formatOutput(result, false);
+      console.log(
+        '\n🎉 Dependency Management System implemented successfully!'
+      );
+      console.log('📋 Installation logic will be added in Milestone 4');
     }
   } catch (error) {
     console.error(

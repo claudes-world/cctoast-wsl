@@ -37,9 +37,16 @@ When requesting user testing, provide specific instructions:
 
 ### Testing Workflow:
 1. **Create** `PLEASE-TEST-<issue-number>.md` file with comprehensive test instructions
-2. **Request** user testing via issue comment with link to test file  
+2. **Tag @mcorrig4** in issue comment with friendly testing request and test file link
 3. **Wait** for user validation before closing milestone
 4. **Address** any issues found and re-test if needed
+
+### Partner Collaboration:
+- **Always tag @mcorrig4** as your development partner for testing
+- Use friendly, conversational tone (not formal/robotic)
+- Clearly explain what you need and why
+- Set realistic expectations and timeframes
+- Thank them for collaboration - never pressure
 
 ### Example Files Created:
 - `PLEASE-TEST-3.md` - Interactive CLI mode validation for Milestone 2

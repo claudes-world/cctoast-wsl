@@ -409,16 +409,34 @@ Before closing milestones that include interactive or system-dependent features,
 ### Example Test Request Comment:
 
 ```bash
-gh issue comment 3 --body "🧪 **User Testing Required**
+gh issue comment 3 --body "Hey @mcorrig4! 👋
 
-Implementation is complete but needs validation in a real terminal environment.
+Could you please review and test the interactive CLI features when you have a few minutes? 
 
-**Test File**: [PLEASE-TEST-3.md](./PLEASE-TEST-3.md)
+**What I need**: Your validation of the interactive mode in a real terminal environment
 
-**Why Testing Needed**: Interactive prompts, TTY detection, and signal handling cannot be fully tested in Claude Code environment.
+**Test File**: [PLEASE-TEST-3.md](./PLEASE-TEST-3.md) - Contains detailed test cases with step-by-step instructions
 
-**Please test when convenient and report results. Will wait for your validation before closing this milestone.**"
+**Why needed**: Interactive prompts, TTY detection, and Ctrl+C handling can't be fully tested in my development environment
+
+**What to expect**: [Brief description of what they'll be testing - estimated time]
+
+**Environment**: [Specific environment requirements]
+
+Just follow the test file instructions and comment back with ✅/❌ results for each test case. No rush - whenever you have time! 
+
+Thanks for helping validate this milestone! 🙏"
 ```
+
+### Partner Collaboration Protocol
+
+**Always tag @mcorrig4** as your development partner when requesting testing or validation:
+- Use friendly, conversational tone
+- Clearly explain what you need from them
+- Provide direct links to test files
+- Set clear expectations (time, environment, reporting format)
+- Thank them for their collaboration
+- Never pressure - always "when convenient"
 
 ### Post-Testing Actions
 
