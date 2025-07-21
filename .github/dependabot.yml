@@ -1,0 +1,119 @@
+version: 2
+updates:
+  # Enable version updates for npm dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    
+    # Dependency update configuration
+    open-pull-requests-limit: 5
+    
+    # Commit message preferences
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    
+    # Assignees and reviewers
+    assignees:
+      - "mcorrig4"
+    
+    # Security updates have higher priority
+    labels:
+      - "dependencies"
+      - "automated"
+    
+    # Group dependency updates to reduce PR noise
+    groups:
+      # Group all patch-level updates
+      patch-updates:
+        patterns:
+          - "*"
+        update-types:
+          - "patch"
+      
+      # Group TypeScript and ESLint related dependencies
+      typescript-ecosystem:
+        patterns:
+          - "typescript*"
+          - "@typescript-eslint/*"
+          - "eslint*"
+        update-types:
+          - "minor"
+          - "patch"
+          
+      # Group testing dependencies
+      test-dependencies:
+        patterns:
+          - "vitest*"
+          - "@vitest/*"
+          - "bats*"
+        update-types:
+          - "minor"
+          - "patch"
+          
+      # Group build tools
+      build-tools:
+        patterns:
+          - "esbuild"
+          - "prettier"
+          - "husky"
+          - "lint-staged"
+        update-types:
+          - "minor"
+          - "patch"
+    
+    # Ignore specific dependencies if needed
+    ignore:
+      # Ignore major version updates for stable dependencies
+      # until manually reviewed
+      - dependency-name: "commander"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@clack/prompts" 
+        update-types: ["version-update:semver-major"]
+    
+    # Allow automatic merging of patch updates
+    # (Note: This requires branch protection rules to be configured)
+    allow:
+      - dependency-type: "direct:production"
+        update-type: "security"
+      - dependency-type: "direct:development"
+        update-type: "security"
+      - dependency-type: "indirect"
+        update-type: "security"
+
+  # Monitor GitHub Actions workflows
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "09:00"
+      timezone: "UTC"
+    
+    open-pull-requests-limit: 3
+    
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    
+    labels:
+      - "github-actions"
+      - "ci"
+      - "automated"
+    
+    assignees:
+      - "mcorrig4"
+    
+    # Group GitHub Actions updates
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
