@@ -1,0 +1,3 @@
+#!/usr/bin/env node
+
+console.log("cctoast-wsl v0.0.1 - Foundation build system placeholder");console.log("CLI implementation coming in Milestone 2");process.exit(0);

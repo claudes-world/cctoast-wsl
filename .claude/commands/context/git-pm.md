@@ -8,3 +8,5 @@ READ THESE FILES IN PARALLEL:
 
 @docs/PROJECT_MANAGEMENT.md
 
+What should we do next?
+

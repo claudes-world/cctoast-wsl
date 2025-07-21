@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../src/cli.ts"],
+  "sourcesContent": ["/**\n * cctoast-wsl CLI Entry Point\n * \n * Secure, zero-admin utility for Windows toast notifications from WSL\n * via Claude Code hooks using PowerShell BurntToast module.\n */\n\nconsole.log('cctoast-wsl v0.0.1 - Foundation build system placeholder');\nconsole.log('CLI implementation coming in Milestone 2');\nprocess.exit(0);"],
+  "mappings": ";;;;AAOA,QAAQ,IAAI,0DAA0D;AACtE,QAAQ,IAAI,0CAA0C;AACtD,QAAQ,KAAK,CAAC;",
+  "names": []
+}
