@@ -89,7 +89,10 @@
     "scripts/*.sh": [
       "shellcheck"
     ],
-    "*.{mjs,json}": [
+    "./*.{mjs,json}": [
+      "prettier --write"
+    ],
+    "src/**/*.{mjs,json}": [
       "prettier --write"
     ]
   }

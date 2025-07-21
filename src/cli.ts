@@ -10,16 +10,23 @@ import process from 'node:process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import {
-  intro,
-  outro,
-  select,
-  multiselect,
-  confirm,
-  isCancel,
-  cancel,
-  log,
-} from '@clack/prompts';
+// import {
+//   intro as p.intro,
+//   outro as p.outro,
+//   select as p.select,
+//   multiselect as p.multiselect,
+//   confirm as p.confirm,
+//   isCancel as p.isCancel,
+//   cancel as p.cancel,
+//   log as p.log,
+//   spinner as p.spinner,
+//   tasks as p.tasks,
+//   group as p.group,
+// } from '@clack/prompts';
+import * as p from '@clack/prompts';
+import color from 'picocolors';
+
+import { DependencyChecker, BurntToastAutoInstaller } from './dependencies.js';
 
 // Get package.json for version info
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
@@ -80,8 +87,8 @@ function initializeCLI(): Command {
 
   // Installation scope flags (mutually exclusive)
   program
-    .option('-g, --global', 'Install to ~/.claude/... (default)')
-    .option('-l, --local', 'Install to .claude/...')
+    .option('-g, --global', 'Install for user to ~/.claude/... (default)')
+    .option('-l, --local', 'Install for project to .claude/...')
     .addHelpText(
       'after',
       '\nScope Options:\n  Only one of --global or --local can be specified'
@@ -97,7 +104,7 @@ function initializeCLI(): Command {
   // Installation behavior flags
   program.option(
     '--sync',
-    'When local, modify tracked settings.json instead of settings.local.json',
+    'When local, modify tracked settings.json instead of settings.local.json (not recommended for teams due to Windows-only nature of hooks)',
     false
   );
 
@@ -201,7 +208,7 @@ function isInteractive(): boolean {
  * Handle cancellation in clack prompts
  */
 function handleCancel(): void {
-  cancel('Operation cancelled by user');
+  p.cancel('Operation cancelled by user');
   process.exit(ExitCodes.USER_ABORT);
 }
 
@@ -209,16 +216,16 @@ function handleCancel(): void {
  * Interactive prompt flow: scope → hooks → sync → confirm
  */
 async function runInteractiveMode(): Promise<CliOptions> {
-  intro('🍞 cctoast-wsl Installation');
+  p.intro('🍞 cctoast-wsl Installation');
 
   // Step 1: Scope selection
-  const scope = await select({
+  const scope = await p.select({
     message: 'Choose installation scope:',
     options: [
       {
         value: 'global',
         label: 'Global',
-        hint: 'Install to ~/.claude/ (recommended)',
+        hint: '★ Recommended - Install to ~/.claude/',
       },
       {
         value: 'local',
@@ -228,13 +235,13 @@ async function runInteractiveMode(): Promise<CliOptions> {
     ],
   });
 
-  if (isCancel(scope)) {
+  if (p.isCancel(scope)) {
     handleCancel();
   }
   const scopeValue = scope as string;
 
   // Step 2: Hook selection
-  const hooks = await multiselect({
+  const hooks = await p.multiselect({
     message: 'Select hooks to enable:',
     options: [
       {
@@ -252,19 +259,19 @@ async function runInteractiveMode(): Promise<CliOptions> {
     required: true,
   });
 
-  if (isCancel(hooks)) {
+  if (p.isCancel(hooks)) {
     handleCancel();
   }
 
   // Step 3: Sync option (only for local installs)
   let sync = false;
   if (scopeValue === 'local') {
-    const syncResult = await confirm({
+    const syncResult = await p.confirm({
       message: 'Modify tracked settings.json instead of settings.local.json?',
       initialValue: false,
     });
 
-    if (isCancel(syncResult)) {
+    if (p.isCancel(syncResult)) {
       handleCancel();
     }
     sync = syncResult as boolean;
@@ -278,20 +285,45 @@ async function runInteractiveMode(): Promise<CliOptions> {
     ...(scopeValue === 'local' ? [`Sync: ${sync ? 'yes' : 'no'}`] : []),
   ];
 
-  log.info(
+  p.log.info(
     `Configuration summary:\n${summary.map(item => `  • ${item}`).join('\n')}`
   );
 
-  const proceed = await confirm({
+  // Add descriptive explanation based on config
+  let configExplanation = '';
+  if (scopeValue === 'global') {
+    configExplanation =
+      `\nHooks for ${hooksList.map(h => h.charAt(0).toUpperCase() + h.slice(1)).join(' and ')} will be added to your global settings at ~/.claude/settings.json.\n` +
+      'The cctoast-wsl tool will install the necessary scripts and configuration for Windows toast notifications, available to all WSL sessions for your user.';
+  } else if (scopeValue === 'local') {
+    if (sync) {
+      configExplanation =
+        `\nHooks for ${hooksList.map(h => h.charAt(0).toUpperCase() + h.slice(1)).join(' and ')} will be added to your project's tracked settings at ./.claude/settings.json.\n` +
+        'This will update the main project settings (recommended only if your team is Windows-only).';
+    } else {
+      configExplanation =
+        `\nHooks for ${hooksList.map(h => h.charAt(0).toUpperCase() + h.slice(1)).join(' and ')} will be added to your local-only settings at ./.claude/settings.local.json.\n` +
+        'This keeps Windows-specific configuration out of version control, ideal for cross-platform teams.';
+    }
+    configExplanation +=
+      '\nThe cctoast-wsl tool will install the necessary scripts and configuration for toast notifications in this project.';
+  }
+  // TODO: After pre-flight checks, improve this message to be more precise, descriptive, and better formatted/worded.
+  // Consider including actual file paths, resolved hook actions, and a summary of what will happen next.
+  if (configExplanation) {
+    p.log.message(configExplanation);
+  }
+
+  const proceed = await p.confirm({
     message: 'Proceed with installation?',
     initialValue: true,
   });
 
-  if (isCancel(proceed) || !proceed) {
+  if (p.isCancel(proceed) || !proceed) {
     handleCancel();
   }
 
-  outro('Ready to install! 🎉');
+  p.outro('Ready to install! 🎉');
 
   return {
     global: scopeValue === 'global',
@@ -313,14 +345,126 @@ async function runInteractiveMode(): Promise<CliOptions> {
  */
 function setupSignalHandlers(): void {
   process.on('SIGINT', () => {
-    cancel('\nOperation cancelled by user');
+    p.cancel('\nOperation cancelled by user');
     process.exit(ExitCodes.USER_ABORT);
   });
 
   process.on('SIGTERM', () => {
-    cancel('\nOperation terminated');
+    p.cancel('\nOperation terminated');
     process.exit(ExitCodes.USER_ABORT);
   });
+}
+
+/**
+ * Run dependency checks with user-friendly output
+ */
+async function runDependencyChecks(options: CliOptions): Promise<void> {
+  const s = p.spinner();
+  s.start('Checking system dependencies...');
+  if (!options.quiet) {
+    console.log('🔍 Checking system dependencies...\n');
+  }
+
+  const checker = new DependencyChecker(options.force);
+  const results = await checker.checkAll();
+  
+  // Separate fatal and non-fatal failures
+  const fatalFailures = results.filter(r => !r.passed && r.fatal);
+  const warnings = results.filter(r => !r.passed && !r.fatal);
+  const passed = results.filter(r => r.passed);
+
+  // Display results
+  if (!options.quiet) {
+    // Show passed checks
+    passed.forEach(result => {
+      p.log.message(`${result.message}`, { symbol: color.cyan('✔') });
+
+    });
+
+    // Show warnings
+    warnings.forEach(result => {
+      console.log(`⚠️  ${result.message}`);
+      if (result.remedy) {
+        console.log(`   💡 ${result.remedy}`);
+      }
+    });
+  }
+
+  // Handle fatal failures
+  if (fatalFailures.length > 0) {
+    if (!options.quiet) {
+      console.log('\n❌ Fatal dependency checks failed:\n');
+
+      fatalFailures.forEach(result => {
+        console.log(`   • ${result.message}`);
+        if (result.remedy) {
+          console.log(`     Fix: ${result.remedy}`);
+        }
+      });
+    }
+
+    // Special handling for BurntToast - offer auto-install
+    const burntToastFailure = fatalFailures.find(
+      r => r.name === 'burnttoast-module'
+    );
+    if (burntToastFailure && !options.quiet) {
+      const autoInstaller = new BurntToastAutoInstaller();
+
+      try {
+        console.log('\n🤖 Auto-installation available for BurntToast module');
+        const consent = await p.confirm({
+          message:
+            'Would you like to automatically install BurntToast PowerShell module?',
+          initialValue: true,
+        });
+
+        if (p.isCancel(consent)) {
+          handleCancel();
+        }
+
+        if (consent) {
+          await autoInstaller.install();
+
+          // Verify installation
+          if (await autoInstaller.verify()) {
+            console.log(
+              '✅ BurntToast module installed and verified successfully'
+            );
+
+            // Remove BurntToast from fatal failures
+            const remainingFailures = fatalFailures.filter(
+              r => r.name !== 'burnttoast-module'
+            );
+            if (remainingFailures.length === 0) {
+              console.log('\n🎉 All dependency checks now pass!');
+              return;
+            }
+          } else {
+            console.log('❌ BurntToast installation verification failed');
+          }
+        }
+      } catch (error) {
+        console.log(
+          `❌ Auto-installation failed: ${error instanceof Error ? error.message : error}`
+        );
+      }
+    }
+
+    if (
+      !options.force ||
+      fatalFailures.some(r => r.name === 'burnttoast-module')
+    ) {
+      console.log(
+        '\n💡 Use --force to bypass non-fatal checks, but BurntToast is required'
+      );
+      process.exit(ExitCodes.DEPENDENCY_FAILURE);
+    }
+  }
+
+  if (!options.quiet && warnings.length === 0 && fatalFailures.length === 0) {
+    console.log('\n🎉 All dependency checks passed!');
+  }
+  s.stop();
 }
 
 /**
@@ -378,34 +522,82 @@ async function main(): Promise<void> {
       validateFlags(options);
     }
 
-    // For now, just show the parsed options (implementation will come in later milestones)
-    const result = {
-      action: options.uninstall ? 'uninstall' : 'install',
-      scope: options.local ? 'local' : 'global',
-      hooks: {
-        notification: options.notification,
-        stop: options.stop,
-      },
-      settings: {
-        sync: options.sync,
-        dryRun: options.dryRun,
-        force: options.force,
-        quiet: options.quiet,
-      },
-    };
+    // Run dependency checks (Milestone 3)
+    if (options.json) {
+      // For JSON output, run checks silently and include in output
+      const checker = new DependencyChecker(options.force);
+      const depResults = await checker.checkAll();
 
-    if (options.dryRun) {
-      console.log('DRY RUN MODE - No files will be modified\n');
+      const result = {
+        action: options.uninstall ? 'uninstall' : 'install',
+        scope: options.local ? 'local' : 'global',
+        hooks: {
+          notification: options.notification,
+          stop: options.stop,
+        },
+        settings: {
+          sync: options.sync,
+          dryRun: options.dryRun,
+          force: options.force,
+          quiet: options.quiet,
+        },
+        dependencies: {
+          timestamp: new Date().toISOString(),
+          results: depResults.map(r => ({
+            name: r.name,
+            passed: r.passed,
+            fatal: r.fatal,
+            message: r.message,
+            remedy: r.remedy,
+          })),
+          summary: {
+            total: depResults.length,
+            passed: depResults.filter(r => r.passed).length,
+            failed: depResults.filter(r => !r.passed).length,
+            fatal: depResults.filter(r => !r.passed && r.fatal).length,
+            warnings: depResults.filter(r => !r.passed && !r.fatal).length,
+          },
+        },
+      };
+
+      console.log(JSON.stringify(result, null, 2));
+
+      // Exit with appropriate code if dependencies failed
+      const fatalFailures = depResults.filter(r => !r.passed && r.fatal);
+      if (fatalFailures.length > 0 && !options.force) {
+        process.exit(ExitCodes.DEPENDENCY_FAILURE);
+      }
+    } else {
+      // Run dependency checks with user interaction
+      await runDependencyChecks(options);
     }
 
-    if (!shouldUseInteractive) {
-      formatOutput(result, options.json);
+    if (options.dryRun && !options.json) {
+      console.log('\n📋 DRY RUN MODE - No files will be modified');
     }
 
     // TODO: Implement actual installation/uninstallation logic in later milestones
     if (!options.json && !shouldUseInteractive) {
-      console.log('\nCLI Framework implemented successfully!');
-      console.log('Installation logic will be added in Milestone 4');
+      const result: InstallationResult = {
+        action: options.uninstall ? 'uninstall' : 'install',
+        scope: options.local ? 'local' : 'global',
+        hooks: {
+          notification: options.notification,
+          stop: options.stop,
+        },
+        settings: {
+          sync: options.sync,
+          dryRun: options.dryRun,
+          force: options.force,
+          quiet: options.quiet,
+        },
+      };
+
+      formatOutput(result, false);
+      console.log(
+        '\n🎉 Dependency Management System implemented successfully!'
+      );
+      console.log('📋 Installation logic will be added in Milestone 4');
     }
   } catch (error) {
     console.error(
