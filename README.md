@@ -165,20 +165,20 @@ powershell.exe -Command "Install-Module BurntToast -Scope CurrentUser -Force"
 ## Documentation
 
 ### Getting Help
-- **[FAQ](docs/FAQ.md)** - Common issues and solutions
-- **[Manual Installation](docs/MANUAL.md)** - Step-by-step installation without npm
-- **[Security Guide](docs/SECURITY.md)** - Security considerations and best practices
-- **[Advanced Usage](docs/ADVANCED.md)** - Customization and integration examples
+- **[FAQ](docs/user-guides/FAQ.md)** - Common issues and solutions
+- **[Manual Installation](docs/user-guides/MANUAL.md)** - Step-by-step installation without npm
+- **[Security Guide](docs/user-guides/SECURITY.md)** - Security considerations and best practices
+- **[Advanced Usage](docs/user-guides/ADVANCED.md)** - Customization and integration examples
 
 ### For Developers
 - **[Contributing Guide](CONTRIBUTING.md)** - Development environment and contribution guidelines
-- **[Architecture](docs/ARCHITECTURE.md)** - System design and technical decisions
-- **[Developer Workflow](docs/DEVELOPER_WORKFLOW.md)** - Setup, testing, and debugging
+- **[Architecture](docs/ai_docx/ARCHITECTURE.md)** - System design and technical decisions
+- **[Developer Workflow](docs/ai_docx/DEVELOPER_WORKFLOW.md)** - Setup, testing, and debugging
 
 ### Technical Specifications
-- **[Product Requirements](docs/PRD.md)** - Complete specifications and success metrics
-- **[Implementation Plan](docs/IMPLEMENTATION_PLAN.md)** - 8-milestone development roadmap
-- **[BurntToast Reference](docs/BurntToast_manpage.txt)** - PowerShell module documentation
+- **[Product Requirements](docs/ai_docx/PRD.md)** - Complete specifications and success metrics
+- **[Implementation Plan](docs/ai_docx/IMPLEMENTATION_PLAN.md)** - 8-milestone development roadmap
+- **[BurntToast Reference](docs/ref/BurntToast_manpage.txt)** - PowerShell module documentation
 
 #### CI/CD Pipeline
 cctoast-wsl uses a comprehensive automated testing and release pipeline:
@@ -190,7 +190,7 @@ cctoast-wsl uses a comprehensive automated testing and release pipeline:
 
 For local CI testing: `act -j test --dryrun` (requires [nektos/act](https://github.com/nektos/act))
 
-See [Developer Workflow - CI/CD Pipeline](docs/DEVELOPER_WORKFLOW.md#cicd-pipeline--testing) for complete details.
+See [Developer Workflow - CI/CD Pipeline](docs/ai_docx/DEVELOPER_WORKFLOW.md#cicd-pipeline--testing) for complete details.
 
 ---
 

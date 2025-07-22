@@ -6,10 +6,10 @@ argument-hint:
 
 READ THESE FILES IN PARALLEL:
 
-@docs/ARCHITECTURE.md
-@docs/DEVELOPER_WORKFLOW.md
-@docs/IMPLEMENTATION_PLAN.md
-@docs/PRD.md
+@docs/ai_docx/ARCHITECTURE.md
+@docs/ai_docx/DEVELOPER_WORKFLOW.md
+@docs/ai_docx/IMPLEMENTATION_PLAN.md
+@docs/ai_docx/PRD.md
 
 
 gh label create "milestone" --description "Major milestone tracking" --color "0052cc" --repo "claudes-world/cctoast-wsl"

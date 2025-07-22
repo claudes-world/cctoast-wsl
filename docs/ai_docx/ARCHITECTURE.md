@@ -59,6 +59,7 @@ graph TB
 **Location**: `src/cli/`
 **Purpose**: One-time installation and configuration
 **When it runs**: Only during `npx @claude/cctoast-wsl` or manual installation
+
 **Key Responsibilities**:
 - Parse command-line arguments
 - Perform dependency checks

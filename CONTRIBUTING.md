@@ -623,10 +623,10 @@ Releases are automated using **release-please**:
 
 ### Documentation Resources
 
-- **[Architecture Guide](docs/ARCHITECTURE.md)**: Technical design and decisions
-- **[Developer Workflow](docs/DEVELOPER_WORKFLOW.md)**: Detailed development procedures
-- **[FAQ](docs/FAQ.md)**: Common questions and troubleshooting
-- **[Security Guide](docs/SECURITY.md)**: Security considerations
+- **[Architecture Guide](docs/ai_docx/ARCHITECTURE.md)**: Technical design and decisions
+- **[Developer Workflow](docs/ai_docx/DEVELOPER_WORKFLOW.md)**: Detailed development procedures
+- **[FAQ](docs/user-guides/FAQ.md)**: Common questions and troubleshooting
+- **[Security Guide](docs/user-guides/SECURITY.md)**: Security considerations
 
 ### Mentorship
 

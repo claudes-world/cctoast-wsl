@@ -7,19 +7,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 When working on this project, always consult these key documentation files:
 
 **Orchestration & Planning:**
-- @docs/PROJECT_MANAGEMENT.md - Comprehensive project management guide specifically for LLM developers. Covers issue management, feature branching, PR workflows, and progress tracking. Essential for understanding how to properly start, track, and complete work on features and milestones.
+- @docs/ai_docx/PROJECT_MANAGEMENT.md - Comprehensive project management guide specifically for LLM developers. Covers issue management, feature branching, PR workflows, and progress tracking. Essential for understanding how to properly start, track, and complete work on features and milestones.
 
 **Planning, Implementation, & Coding:**
-- @docs/PRD.md - Complete Product Requirements Document defining 14 deliverables, CLI flags, dependency checks, hook installation logic, security requirements, testing goals (90% coverage), and future enhancements. Critical for understanding scope and success metrics.
-- @docs/IMPLEMENTATION_PLAN.md - 8-milestone implementation roadmap with detailed subtasks and acceptance criteria. Essential for tracking progress and understanding the simplified 2-layer architecture (CLI installer + runtime bash script).
-- @docs/ARCHITECTURE.md - Technical design showing 2-layer architecture, component interactions, data flow, module structure, error handling strategy, and extension points. Key for understanding how CLI installer sets up runtime bash script.
-- @docs/DEVELOPER_WORKFLOW.md - Development environment setup, branch strategy, commit conventions, testing procedures, debugging techniques, and troubleshooting guide. Required for contributing to the project.
+- @docs/ai_docx/PRD.md - Complete Product Requirements Document defining 14 deliverables, CLI flags, dependency checks, hook installation logic, security requirements, testing goals (90% coverage), and future enhancements. Critical for understanding scope and success metrics.
+- @docs/ai_docx/IMPLEMENTATION_PLAN.md - 8-milestone implementation roadmap with detailed subtasks and acceptance criteria. Essential for tracking progress and understanding the simplified 2-layer architecture (CLI installer + runtime bash script).
+- @docs/ai_docx/ARCHITECTURE.md - Technical design showing 2-layer architecture, component interactions, data flow, module structure, error handling strategy, and extension points. Key for understanding how CLI installer sets up runtime bash script.
+- @docs/ai_docx/DEVELOPER_WORKFLOW.md - Development environment setup, branch strategy, commit conventions, testing procedures, debugging techniques, and troubleshooting guide. Required for contributing to the project.
 
 **Documentation & Writing Text:**
-- @docs/DOCUMENTATION_STYLE_GUIDE.md - Writing and formatting guidelines for all project documentation. Essential for creating engaging, scannable content with proper markdown formatting, visual elements, and structure patterns. Always reference before updating README or other user-facing docs.
+- @docs/ai_docx/DOCUMENTATION_STYLE_GUIDE.md - Writing and formatting guidelines for all project documentation. Essential for creating engaging, scannable content with proper markdown formatting, visual elements, and structure patterns. Always reference before updating README or other user-facing docs.
 
 **Manpage & Reference Docs:**
-- @docs/BurntToast_manpage.txt - PowerShell BurntToast module documentation for creating Windows toast notifications. Reference for understanding the underlying notification API.
+- @docs/ref/BurntToast_manpage.txt - PowerShell BurntToast module documentation for creating Windows toast notifications. Reference for understanding the underlying notification API.
+- @docs/ref/Claude_Code_Hooks_Reference.md - Claude Code Hooks JSON Reference Manual. Reference for understanding the underlying notification API.
 
 Always ensure implementations align with these specifications and follow the established patterns.
 
@@ -164,7 +165,7 @@ The project uses milestone-based GitHub issues to track all development work:
 ### Issue Structure
 - **8 Milestone Issues (#2-#9)**: Each represents one of the 8 implementation milestones
 - **Comprehensive Task Lists**: Each milestone issue contains detailed checkbox lists of all subtasks
-- **Labels System**: Run `./labels.sh` to create the full labeling system for organization
+- **Labels System**: Run `./scripts/labels.sh` to create the full labeling system for organization
 - **Progress Tracking**: Use issue comments to provide regular progress updates
 
 ### Workflow for LLM Developers
@@ -174,58 +175,16 @@ The project uses milestone-based GitHub issues to track all development work:
 4. **Create PR**: Link back to the milestone issue when ready for review
 5. **Complete**: Close issue after successful merge
 
-### Key Commands
-```bash
-# View all milestone issues
-gh issue list --label "milestone"
 
-# Assign issue to yourself
-gh issue edit <number> --add-assignee @me
+### MANDATORY LLM Agent Git Workflow
 
-# Update progress
-gh issue comment <number> --body "Progress update: [details]"
-```
-
-See @docs/PROJECT_MANAGEMENT.md for complete workflow details.
-
-## 🚨 MANDATORY LLM Agent Workflow Requirements
-
-### **ALWAYS Use Git Worktree**
-**CRITICAL**: LLM agents MUST create isolated worktrees before starting any work to prevent conflicts:
-
-```bash
-# Navigate to main project directory 
-cd /path/to/cctoast-wsl
-
-# Get the absolute latest code from remote
-git fetch origin
-
-# Create worktree from latest remote main
-git worktree add worktree-issue<NUMBER> origin/main
-cd worktree-issue<NUMBER>
-
-# Create your feature branch
-git checkout -b feat/<issue-number>-<description>
-```
-
-### **ALWAYS Manage Issue Assignment**
-**REQUIRED**: Proper issue assignment prevents multiple agents working on the same task:
-
-```bash
-# Before starting work - assign to yourself
-gh issue edit <issue-number> --add-assignee @me
-
-# Find available work (not assigned)
-gh issue list --assignee "" --state open
-
-# Check what you're currently assigned to
-gh issue list --assignee "@me"
-```
-
-### **Quick Reference for LLM Agents**
+* **ALWAYS Manage Issue Assignment & Tagging**: Proper issue assignment prevents multiple agents working on the same task
+* **IMPORTANT**: If you are not currently working on an issue **STOP!**. Ask the user which issue we are working on
+* **CRITICAL**: LLM agents **MUST** create isolated worktrees before starting any work to prevent conflicts
 ```bash
 # 1. Find available issue
 gh issue list --assignee "" --state open
+# To find a new issue to work on, make sure the label isn't "in-progress"
 
 # 2. Set up worktree (get latest code first)
 git fetch origin && git worktree add worktree-issue<N> origin/main && cd worktree-issue<N>
@@ -236,6 +195,7 @@ git checkout -b feat/<N>-<description>
 
 # 4. Notify start of work
 gh issue comment <N> --body "🚧 Starting work in worktree-issue<N>"
+gh issue edit <N> --label "in-progress"
 ```
 
 **See @docs/PROJECT_MANAGEMENT.md for complete workflow details.**

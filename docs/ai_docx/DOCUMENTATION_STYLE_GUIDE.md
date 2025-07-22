@@ -133,7 +133,7 @@ How to confirm it worked
 
 ### Links and References
 ```markdown
-- **Internal links**: Use relative paths `[Architecture](docs/ARCHITECTURE.md)`
+- **Internal links**: Use relative paths `[Architecture](docs/ai_docx/ARCHITECTURE.md)`
 - **External links**: Open in new tab when appropriate
 - **Reference-style**: For repeated links use `[text][ref]` format
 ```
