@@ -10,6 +10,10 @@
 Transform your Claude Code workflow with native Windows notifications that appear when Claude is waiting for input or completes tasks - all from within WSL with no system-level changes required.
 
 ## Demo
+
+> [!NOTE]  
+> **Animated demos coming soon** - GIF recordings of toast notifications and CLI installation will be added in a future release
+
 <!-- GIF placeholder - TODO: Record toast notification demo -->
 <div style="text-align: center;">
   <img src="./docs/assets/demo.gif" alt="Product Demo Recording" style="width: 90%; max-width: 600px;" >
@@ -39,7 +43,7 @@ Get Windows toast notifications working in under 2 minutes:
 3. **Done**: Toast notifications now work from WSL!
 
 > [!TIP]  
-> Installation completes in under 30 seconds and requires no admin privileges
+> Installation completes in under 30 seconds and requires no admin privileges. BurntToast PowerShell module is automatically installed if needed (user consent required).
 
 ### One-line installation
 ```bash
@@ -60,24 +64,25 @@ npx @claude/cctoast-wsl --global --quiet
 
 Complete list of available flags and options:
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--global/-g` | ✓ | Install to `~/.claude/…` |
-| `--local/-l` | | Install to `.claude/…` |
-| `--notification / --no-notification` | on | Include Notification hook |
-| `--stop / --no-stop` | on | Include Stop hook |
-| `--sync` | off | When local, modify tracked `settings.json` |
-| `--print-instructions/-p` | | Show usage & exit |
-| `--json` | off | Machine-readable summary |
-| `--dry-run/-n` | | Preview without writes |
-| `--force/-f` | | Bypass failed checks (except BurntToast) |
-| `--quiet/-q` | | Suppress prompts for CI |
-| `--uninstall` | | Remove install (scope prompts) |
-| `--version/-v` `--help/-h` | | Meta commands |
+| Flag                                 | Default | Description                                 |
+| ------------------------------------ | ------- | ------------------------------------------- |
+| `--global/-g`                        | ✔       | Install to `~/.claude/…`.                   |
+| `--local/-l`                         |         | Install to `.claude/…`.                     |
+| `--notification / --no-notification` | on      | Include Notification hook.                  |
+| `--stop / --no-stop`                 | on      | Include Stop hook.                          |
+| `--sync`                             | off     | When local, modify tracked `settings.json`. |
+| `--print-instructions/-p`            |         | Show usage & exit.                          |
+| `--json`                             | off     | Machine‑readable summary.                   |
+| `--dry-run/-n`                       |         | Preview without writes.                     |
+| `--force/-f`                         |         | Bypass failed checks (except BurntToast).   |
+| `--quiet/-q`                         |         | Suppress prompts for CI.                    |
+| `--uninstall`                        |         | Remove install (scope prompts).             |
+| `--version/-v` `--help/-h`           |         | Meta.                                       |
 
 > [!NOTE]  
-> **Defaults**: Global installation + both hooks enabled + no sync  
-> **Exit codes**: `0` success · `1` abort · `2` dependency failure · `3` I/O error
+> **Defaults**: Global + both hooks + no sync  
+> **Exit codes**: `0` success · `1` abort · `2` dep‑fail · `3` I/O error  
+> **Interactive flow**: scope → hooks → sync → confirm
 
 ### Common usage examples
 
@@ -150,8 +155,11 @@ powershell.exe -Command "Set-ExecutionPolicy -Scope CurrentUser RemoteSigned"
 
 #### ❌ "BurntToast module not found"
 ```bash
-# Install BurntToast module for current user
+# The installer offers automatic installation, but if needed manually:
 powershell.exe -Command "Install-Module BurntToast -Scope CurrentUser -Force"
+
+# Verify installation
+powershell.exe -Command "Get-Module -ListAvailable -Name BurntToast"
 ```
 
 #### ❌ No notifications appearing
