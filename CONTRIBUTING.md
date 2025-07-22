@@ -380,6 +380,25 @@ teardown() {
     
     assert_success
 }
+
+@test "should auto-install BurntToast when missing" {
+    # Mock PowerShell to simulate missing module
+    function powershell.exe() {
+        if [[ "$*" == *"Get-Module"* ]]; then
+            return 1  # Module not found
+        elif [[ "$*" == *"Install-Module"* ]]; then
+            echo "Installing BurntToast..." > "$TEST_DIR/install.log"
+            return 0  # Installation succeeded
+        fi
+        echo "Module installed" > "$TEST_DIR/notification.log"
+    }
+    export -f powershell.exe
+    
+    run ./scripts/show-toast.sh --title "Test"
+    
+    assert_success
+    assert_file_contains "$TEST_DIR/install.log" "Installing BurntToast"
+}
 ```
 
 ### Coverage Requirements
@@ -388,6 +407,35 @@ teardown() {
 - **Critical paths**: 100% coverage
 - **New features**: Must include tests
 - **Bug fixes**: Must include regression tests
+
+### BurntToast Testing Requirements
+
+When contributing changes that affect BurntToast integration:
+
+#### Auto-Installation Testing
+```bash
+# Test BurntToast detection and auto-installation
+npm run test:integration -- --grep "BurntToast"
+
+# Manual testing for auto-installation flow
+node bin/cctoast-wsl --dry-run  # Should detect BurntToast status
+```
+
+#### PowerShell Module Testing
+```bash
+# Test module availability detection
+powershell.exe -Command "Get-Module -ListAvailable -Name BurntToast"
+
+# Test auto-installation in clean environment
+# (Requires Windows environment or mocking)
+```
+
+#### Required Test Cases
+- [ ] BurntToast module detection (present/missing)
+- [ ] Auto-installation user consent flow
+- [ ] Installation failure handling
+- [ ] Module verification after installation
+- [ ] PowerShell execution policy compatibility
 
 ## Documentation Guidelines
 
