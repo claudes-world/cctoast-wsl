@@ -179,7 +179,7 @@ export class JsoncParser {
     // Try to extract position information from common JSON error messages
     const positionMatch = message.match(/at position (\d+)/);
     if (positionMatch) {
-      const position = parseInt(positionMatch[1], 10);
+      const position = parseInt(positionMatch[1]!, 10);
       const { line, column } = this.getLineColumn(position);
       return `JSON syntax error at line ${line}, column ${column}: ${message}`;
     }

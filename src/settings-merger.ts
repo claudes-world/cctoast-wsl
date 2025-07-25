@@ -5,7 +5,7 @@
  * with support for JSON with Comments (JSONC) format.
  */
 
-import { JsoncParser, ParseResult } from './jsonc-parser.js';
+import { JsoncParser, type ParseResult } from './jsonc-parser.js';
 import { promises as fs } from 'fs';
 import path from 'path';
 import os from 'os';
@@ -28,7 +28,7 @@ export interface MergeOptions {
 export interface MergeResult {
   merged: ClaudeSettings;
   changed: boolean;
-  backupPath?: string;
+  backupPath?: string | undefined;
 }
 
 /**

@@ -102,9 +102,9 @@ var require_picocolors = __commonJS({
 var import_picocolors = __toESM(require_picocolors(), 1);
 import { Command } from "commander";
 import process2 from "node:process";
-import { readFileSync } from "node:fs";
+import { readFileSync as readFileSync2 } from "node:fs";
 import { join as join2 } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath as fileURLToPath2 } from "node:url";
 import * as p from "@clack/prompts";
 
 // src/dependencies.ts
@@ -840,14 +840,25 @@ var SettingsMerger = class {
 };
 
 // src/installer.ts
-import { promises as fs2, constants } from "fs";
+import { promises as fs2, constants, readFileSync } from "fs";
 import path2 from "path";
 import os2 from "os";
+import { fileURLToPath } from "url";
 var Installer = class {
   constructor(config) {
     this.config = config;
+    try {
+      const __dirname2 = fileURLToPath(new URL(".", import.meta.url));
+      const packagePath2 = path2.join(__dirname2, "..", "package.json");
+      const packageJson2 = JSON.parse(readFileSync(packagePath2, "utf8"));
+      this.packageVersion = packageJson2.version;
+    } catch (error) {
+      this.packageVersion = "0.0.0";
+      console.warn("Warning: Could not read package.json version, using fallback");
+    }
   }
   merger = new SettingsMerger();
+  packageVersion;
   /**
    * Main installation method
    */
@@ -1000,8 +1011,7 @@ var Installer = class {
    */
   async createManifest(installDir, files, settingsPath, hooksInstalled) {
     const manifest = {
-      version: "1.0.0",
-      // TODO: Get from package.json
+      version: this.packageVersion,
       installedAt: (/* @__PURE__ */ new Date()).toISOString(),
       config: this.config,
       files,
@@ -1009,7 +1019,12 @@ var Installer = class {
       hooksInstalled
     };
     const manifestPath = path2.join(installDir, "install-manifest.json");
-    await fs2.writeFile(manifestPath, JSON.stringify(manifest, null, 2), "utf-8");
+    try {
+      await fs2.writeFile(manifestPath, JSON.stringify(manifest, null, 2), "utf-8");
+    } catch (error) {
+      console.warn(`Warning: Could not create installation manifest: ${error.message}`);
+      console.warn("Installation will continue, but uninstall tracking may be affected.");
+    }
   }
   /**
    * Uninstall cctoast-wsl
@@ -1087,9 +1102,9 @@ var Installer = class {
 };
 
 // src/cli.ts
-var __dirname = fileURLToPath(new URL(".", import.meta.url));
+var __dirname = fileURLToPath2(new URL(".", import.meta.url));
 var packagePath = join2(__dirname, "..", "package.json");
-var packageJson = JSON.parse(readFileSync(packagePath, "utf8"));
+var packageJson = JSON.parse(readFileSync2(packagePath, "utf8"));
 var ExitCodes = {
   SUCCESS: 0,
   USER_ABORT: 1,
