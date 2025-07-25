@@ -56,22 +56,27 @@ export class Installer {
     try {
       // Determine installation paths
       const paths = this.getInstallationPaths();
-      
+
       // Create installation directory
       await this.createInstallationDirectory(paths.installDir);
-      
+
       // Copy scripts and assets
       const copiedFiles = await this.copyFiles(paths.installDir);
-      
+
       // Set permissions
       await this.setPermissions(paths.installDir);
-      
+
       // Install hooks into settings
       const hookResult = await this.installHooks(paths);
-      
+
       // Create installation manifest
-      await this.createManifest(paths.installDir, copiedFiles, paths.settingsPath, hookResult.hooksAdded);
-      
+      await this.createManifest(
+        paths.installDir,
+        copiedFiles,
+        paths.settingsPath,
+        hookResult.hooksAdded
+      );
+
       return {
         success: true,
         installedTo: paths.installDir,
@@ -80,7 +85,6 @@ export class Installer {
         hooksAdded: hookResult.hooksAdded,
         message: `Successfully installed cctoast-wsl to ${paths.installDir}`,
       };
-      
     } catch (error) {
       return {
         success: false,
@@ -99,7 +103,7 @@ export class Installer {
     const paths = this.getInstallationPaths();
     const hooks = this.generateHookCommands(paths.installDir);
     const hooksAdded = [];
-    
+
     if (this.config.notificationHook) {
       hooksAdded.push('notification');
     }
@@ -130,7 +134,7 @@ export class Installer {
    */
   private getInstallationPaths() {
     const isGlobal = this.config.global || !this.config.local;
-    
+
     if (isGlobal) {
       const homeDir = os.homedir();
       const installDir = path.join(homeDir, '.claude', 'cctoast-wsl');
@@ -139,7 +143,7 @@ export class Installer {
     } else {
       const cwd = process.cwd();
       const installDir = path.join(cwd, '.claude', 'cctoast-wsl');
-      const settingsPath = this.config.sync 
+      const settingsPath = this.config.sync
         ? path.join(cwd, '.claude', 'settings.json')
         : path.join(cwd, '.claude', 'settings.local.json');
       return { installDir, settingsPath, scope: 'local' as const };
@@ -151,7 +155,7 @@ export class Installer {
    */
   private async createInstallationDirectory(installDir: string): Promise<void> {
     await fs.mkdir(installDir, { recursive: true });
-    
+
     // Create assets subdirectory
     await fs.mkdir(path.join(installDir, 'assets'), { recursive: true });
   }
@@ -161,17 +165,17 @@ export class Installer {
    */
   private async copyFiles(installDir: string): Promise<string[]> {
     const copiedFiles: string[] = [];
-    
+
     // Copy show-toast.sh script
     const scriptSource = path.join(process.cwd(), 'scripts', 'show-toast.sh');
     const scriptDest = path.join(installDir, 'show-toast.sh');
     await fs.copyFile(scriptSource, scriptDest);
     copiedFiles.push('show-toast.sh');
-    
+
     // Copy claude.png icon
     const iconSource = path.join(process.cwd(), 'assets', 'claude.png');
     const iconDest = path.join(installDir, 'assets', 'claude.png');
-    
+
     try {
       await fs.copyFile(iconSource, iconDest);
       copiedFiles.push('assets/claude.png');
@@ -179,7 +183,7 @@ export class Installer {
       // Icon is optional, continue without it
       console.warn('Warning: Could not copy claude.png icon');
     }
-    
+
     return copiedFiles;
   }
 
@@ -188,7 +192,7 @@ export class Installer {
    */
   private async setPermissions(installDir: string): Promise<void> {
     const scriptPath = path.join(installDir, 'show-toast.sh');
-    
+
     // Set script to be executable by user only (0o500)
     await fs.chmod(scriptPath, 0o500);
   }
@@ -196,7 +200,11 @@ export class Installer {
   /**
    * Install hooks into Claude settings
    */
-  private async installHooks(paths: { installDir: string; settingsPath: string; scope: 'global' | 'local' }) {
+  private async installHooks(paths: {
+    installDir: string;
+    settingsPath: string;
+    scope: 'global' | 'local';
+  }) {
     const hookCommands = this.generateHookCommands(paths.installDir);
     const updates: Partial<ClaudeSettings> = { hooks: {} };
     const hooksAdded: string[] = [];
@@ -229,7 +237,7 @@ export class Installer {
    */
   private generateHookCommands(installDir: string) {
     const scriptPath = path.join(installDir, 'show-toast.sh');
-    
+
     return {
       notification: `${scriptPath} --notification-hook`,
       stop: `${scriptPath} --stop-hook`,
@@ -240,9 +248,9 @@ export class Installer {
    * Create installation manifest for uninstall tracking
    */
   private async createManifest(
-    installDir: string, 
-    files: string[], 
-    settingsPath: string, 
+    installDir: string,
+    files: string[],
+    settingsPath: string,
     hooksInstalled: string[]
   ): Promise<void> {
     const manifest: InstallManifest = {
@@ -255,7 +263,11 @@ export class Installer {
     };
 
     const manifestPath = path.join(installDir, 'install-manifest.json');
-    await fs.writeFile(manifestPath, JSON.stringify(manifest, null, 2), 'utf-8');
+    await fs.writeFile(
+      manifestPath,
+      JSON.stringify(manifest, null, 2),
+      'utf-8'
+    );
   }
 
   /**
@@ -264,11 +276,11 @@ export class Installer {
   async uninstall(): Promise<InstallationResult> {
     try {
       const paths = this.getInstallationPaths();
-      
+
       // Load manifest
       const manifestPath = path.join(paths.installDir, 'install-manifest.json');
       let manifest: InstallManifest | null = null;
-      
+
       try {
         const manifestContent = await fs.readFile(manifestPath, 'utf-8');
         manifest = JSON.parse(manifestContent);
@@ -278,10 +290,10 @@ export class Installer {
 
       // Remove hooks from settings
       const removedHooks = await this.removeHooks(paths, manifest);
-      
+
       // Remove installation directory
       await fs.rm(paths.installDir, { recursive: true, force: true });
-      
+
       return {
         success: true,
         installedTo: paths.installDir,
@@ -289,7 +301,6 @@ export class Installer {
         hooksAdded: [], // Actually removed
         message: `Successfully uninstalled cctoast-wsl from ${paths.installDir}. Removed hooks: ${removedHooks.join(', ')}`,
       };
-      
     } catch (error) {
       return {
         success: false,
@@ -305,40 +316,40 @@ export class Installer {
    * Remove hooks from Claude settings
    */
   private async removeHooks(
-    paths: { settingsPath: string; installDir: string }, 
+    paths: { settingsPath: string; installDir: string },
     manifest: InstallManifest | null
   ): Promise<string[]> {
     const removedHooks: string[] = [];
-    
+
     try {
       const content = await fs.readFile(paths.settingsPath, 'utf-8');
       const settings = await this.merger.parseJsonc(content);
-      
+
       if (!settings.hooks) return removedHooks;
-      
+
       const hookCommands = this.generateHookCommands(paths.installDir);
-      
+
       // Remove our hook commands
       for (const [hookType, command] of Object.entries(hookCommands)) {
         const hooks = settings.hooks[hookType];
         if (hooks) {
           const filtered = hooks.filter(hook => hook !== command);
           if (filtered.length !== hooks.length) {
-            settings.hooks[hookType] = filtered.length > 0 ? filtered : undefined;
+            settings.hooks[hookType] =
+              filtered.length > 0 ? filtered : undefined;
             removedHooks.push(hookType);
           }
         }
       }
-      
+
       // Write updated settings
       await this.merger.mergeFile(paths.settingsPath, settings, {
         createBackup: true,
       });
-      
     } catch (error) {
       // Settings file might not exist, that's okay
     }
-    
+
     return removedHooks;
   }
 
@@ -347,10 +358,13 @@ export class Installer {
    */
   async isInstalled(): Promise<boolean> {
     const paths = this.getInstallationPaths();
-    
+
     try {
       await fs.access(paths.installDir, constants.F_OK);
-      await fs.access(path.join(paths.installDir, 'show-toast.sh'), constants.F_OK);
+      await fs.access(
+        path.join(paths.installDir, 'show-toast.sh'),
+        constants.F_OK
+      );
       return true;
     } catch {
       return false;
