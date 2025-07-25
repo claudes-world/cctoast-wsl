@@ -30,5 +30,12 @@ gh label create "powershell" --description "PowerShell integration related" --co
 gh label create "burnttoast" --description "BurntToast module related" --color "ff8c00"
 gh label create "wsl" --description "WSL specific functionality" --color "4caf50"
 
+# Priority Labels
+gh label create "P0-critical" --description "Critical priority - blocks release" --color "d73a4a"
+gh label create "P1-high" --description "High priority" --color "ff6600"
+gh label create "P2-medium" --description "Medium priority" --color "fbca04"
+gh label create "P3-low" --description "Low priority" --color "7057ff"
+
+
 echo "All labels created successfully!"
 echo "Run 'gh label list' to see all labels"
