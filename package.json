@@ -1,6 +1,6 @@
 {
   "name": "@claude/cctoast-wsl",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Secure, zero-admin utility for Windows toast notifications from WSL via Claude Code hooks using PowerShell BurntToast module",
   "keywords": [
     "claude",
