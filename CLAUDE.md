@@ -24,6 +24,14 @@ When working on this project, always consult these key documentation files:
 
 Always ensure implementations align with these specifications and follow the established patterns.
 
+## Git and GitHub Guidelines
+
+### Mandatory GitHub Practices
+- **ALWAYS sign all GitHub comments and messages**
+  - Ensures clear attribution and accountability
+  - Helps track individual contributions
+  - Demonstrates professional communication
+
 ## 🧪 Interactive Feature Testing Protocol
 
 **CRITICAL**: Before closing any milestone that includes interactive/TTY features, ALWAYS request user validation in a real terminal environment. The Claude Code environment cannot fully test interactive prompts, TTY detection, or terminal-specific behaviors.
@@ -203,3 +211,4 @@ gh issue edit <N> --label "in-progress"
 ## Best Practices and Guidelines
 
 - Avoid using emojis in docs unless told to
+```
