@@ -278,7 +278,8 @@ gh pr edit --add-reviewer mcorrig4
 **CRITICAL**: All PRs must be reviewed by @mcorrig4 as the development partner
 
 ```bash
-# Always tag @mcorrig4 as reviewer when creating PRs
+# Always assign and tag @mcorrig4 as reviewer when creating PRs
+gh pr edit --add-assignee mcorrig4
 gh pr edit --add-reviewer mcorrig4
 
 # Comment on PR to notify reviewer
