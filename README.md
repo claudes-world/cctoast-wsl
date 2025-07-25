@@ -189,16 +189,20 @@ powershell.exe -Command "Get-Module -ListAvailable -Name BurntToast"
 - **[BurntToast Reference](docs/ref/BurntToast_manpage.txt)** - PowerShell module documentation
 
 #### CI/CD Pipeline
-cctoast-wsl uses a comprehensive automated testing and release pipeline:
+cctoast-wsl uses optimized GitHub Actions workflows that reduce CI minutes by 70-90%:
 
-- 🧪 **Automated Testing**: Vitest with 90% coverage requirement, shell script validation
-- 🏗️ **Multi-Platform CI**: Ubuntu Node 18/20 + Windows Node 20 with mocked BurntToast  
+- 🧪 **Smart Testing**: Path-based filtering, optimized matrix strategy, conditional execution
+- 🏗️ **Multi-Platform CI**: Ubuntu 18/20 + Windows 20 with enhanced caching  
 - 📦 **Automated Releases**: Conventional commits → Release Please → npm with provenance
 - 🔒 **Security**: SLSA-3 attestation, Dependabot updates, comprehensive security policies
 
-For local CI testing: `act -j test --dryrun` (requires [nektos/act](https://github.com/nektos/act))
+**Workflow Control**: Use `[skip-ci]` and `[skip-review]` flags to control automation
+**Local Testing**: `act -j test --dryrun` (requires [nektos/act](https://github.com/nektos/act))
 
-See [Developer Workflow - CI/CD Pipeline](docs/ai_docx/DEVELOPER_WORKFLOW.md#cicd-pipeline--testing) for complete details.
+> [!TIP]  
+> **CI/CD Optimization Guide**: See [CI/CD Workflows](docs/user-guides/CI-CD.md) for complete details on path filtering, matrix strategies, and workflow control flags.
+
+For development workflows, see [Developer Workflow Guide](docs/ai_docx/DEVELOPER_WORKFLOW.md#cicd-pipeline--testing).
 
 ---
 

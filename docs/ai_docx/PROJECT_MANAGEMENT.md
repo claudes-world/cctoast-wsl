@@ -211,6 +211,46 @@ Update relevant documentation:
 - **Architecture docs** - For design changes
 - **API docs** - For interface changes
 
+### 5. CI/CD Workflow Control
+Use special flags in commit messages and PR titles/descriptions to control workflow execution:
+
+#### Skip CI Workflows
+Add `[skip-ci]` to commit messages to bypass CI and Release Please workflows:
+```bash
+# Skip CI for documentation-only changes
+git commit -m "docs: update installation guide [skip-ci]
+
+Minor documentation updates that don't require CI validation."
+
+# Skip CI for configuration changes that don't affect code
+git commit -m "chore: update IDE settings [skip-ci]"
+```
+
+#### Skip Code Reviews
+Add `[skip-review]` to PR titles or descriptions to bypass Claude Code Review:
+```bash
+# Skip automated code review for simple docs changes
+gh pr create --title "docs: fix typo in README [skip-review]"
+
+# Skip review for urgent hotfixes that need immediate merge
+gh pr create --title "fix: critical security patch" --body "Urgent fix [skip-review]"
+```
+
+#### When to Use Skip Flags
+**Use `[skip-ci]` when**:
+- Making documentation-only changes
+- Updating IDE/editor configuration files
+- Modifying CI workflow files themselves (test separately)
+- Making changes that don't affect code functionality
+
+**Use `[skip-review]` when**:
+- Simple documentation fixes or typos
+- Automated dependency updates (Dependabot)
+- Emergency hotfixes requiring immediate deployment
+- Changes to non-code files (configs, docs, assets)
+
+**⚠️ Caution**: Skip flags should be used judiciously. Most code changes should go through full CI and review processes.
+
 ---
 
 ## 🔄 Pull Request Process
