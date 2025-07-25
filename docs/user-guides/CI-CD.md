@@ -297,9 +297,7 @@ To modify the test matrix:
 
 ```yaml
 # Different matrix for different events
-os: ${{ github.event_name == 'pull_request' && 
-        fromJSON('["ubuntu-latest", "windows-latest"]') || 
-        fromJSON('["ubuntu-18.04", "ubuntu-latest", "windows-latest"]') }}
+os: ${{ github.event_name == 'pull_request' && fromJSON('["ubuntu-latest", "windows-latest"]') || fromJSON('["ubuntu-18.04", "ubuntu-latest", "windows-latest"]') }}
 ```
 
 ### Cache Configuration
