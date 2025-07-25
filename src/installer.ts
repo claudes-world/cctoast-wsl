@@ -5,10 +5,11 @@
  * atomic operations and direct script path injection.
  */
 
-import { SettingsMerger, ClaudeSettings } from './settings-merger.js';
-import { promises as fs, constants } from 'fs';
+import { SettingsMerger, type ClaudeSettings } from './settings-merger.js';
+import { promises as fs, constants, readFileSync } from 'fs';
 import path from 'path';
 import os from 'os';
+import { fileURLToPath } from 'url';
 
 export interface InstallerConfig {
   global: boolean;
@@ -23,7 +24,7 @@ export interface InstallationResult {
   success: boolean;
   installedTo: string;
   settingsPath: string;
-  backupPath?: string;
+  backupPath?: string | undefined;
   hooksAdded: string[];
   message: string;
 }
@@ -42,8 +43,21 @@ export interface InstallManifest {
  */
 export class Installer {
   private merger = new SettingsMerger();
+  private packageVersion: string;
 
-  constructor(private config: InstallerConfig) {}
+  constructor(private config: InstallerConfig) {
+    // Read package.json for version info
+    try {
+      const __dirname = fileURLToPath(new URL('.', import.meta.url));
+      const packagePath = path.join(__dirname, '..', 'package.json');
+      const packageJson = JSON.parse(readFileSync(packagePath, 'utf8'));
+      this.packageVersion = packageJson.version;
+    } catch (error) {
+      // Fallback version if package.json can't be read
+      this.packageVersion = '0.0.0';
+      console.warn('Warning: Could not read package.json version, using fallback');
+    }
+  }
 
   /**
    * Main installation method
@@ -246,7 +260,7 @@ export class Installer {
     hooksInstalled: string[]
   ): Promise<void> {
     const manifest: InstallManifest = {
-      version: '1.0.0', // TODO: Get from package.json
+      version: this.packageVersion,
       installedAt: new Date().toISOString(),
       config: this.config,
       files,
@@ -255,7 +269,14 @@ export class Installer {
     };
 
     const manifestPath = path.join(installDir, 'install-manifest.json');
-    await fs.writeFile(manifestPath, JSON.stringify(manifest, null, 2), 'utf-8');
+    
+    try {
+      await fs.writeFile(manifestPath, JSON.stringify(manifest, null, 2), 'utf-8');
+    } catch (error) {
+      // Log warning but don't fail the installation
+      console.warn(`Warning: Could not create installation manifest: ${(error as Error).message}`);
+      console.warn('Installation will continue, but uninstall tracking may be affected.');
+    }
   }
 
   /**
