@@ -225,6 +225,9 @@ git commit -m "style: fix formatting in CLI parser module"
 
 6. **Test manually** in WSL environment
 
+> [!TIP]  
+> **Workflow Control**: Use `[skip-ci]` in commit messages for docs-only changes, or `[skip-review]` in PR titles to bypass automated code review. See [CI/CD Workflows](docs/user-guides/CI-CD.md) for details.
+
 ### Creating the PR
 
 1. **Push your branch**:
@@ -673,6 +676,7 @@ Releases are automated using **release-please**:
 
 - **[Architecture Guide](docs/ai_docx/ARCHITECTURE.md)**: Technical design and decisions
 - **[Developer Workflow](docs/ai_docx/DEVELOPER_WORKFLOW.md)**: Detailed development procedures
+- **[CI/CD Workflows](docs/user-guides/CI-CD.md)**: Optimized workflows, path filtering, and control flags
 - **[FAQ](docs/user-guides/FAQ.md)**: Common questions and troubleshooting
 - **[Security Guide](docs/user-guides/SECURITY.md)**: Security considerations
 

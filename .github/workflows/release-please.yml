@@ -4,6 +4,14 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'src/**'
+      - 'scripts/**'
+      - 'package*.json'
+      - 'tsconfig.json'
+      - '__tests__/**'
+      - '.github/workflows/release-please.yml'
+      # Only trigger releases when actual code changes, not docs
 
 # Prevent concurrent release PRs
 concurrency:
@@ -14,6 +22,8 @@ jobs:
   release-please:
     name: Release Please
     runs-on: ubuntu-latest
+    # Skip if commit message contains [skip-ci]
+    if: "!contains(github.event.head_commit.message, '[skip-ci]')"
     
     permissions:
       contents: write
