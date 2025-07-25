@@ -30,6 +30,7 @@ graph TB
     F[User Input] --> C
     G[File System] --> C
     H[Network/NPM] -.->|Install only| I[CLI Installer]
+    J[PowerShell Gallery] -.->|Auto-install BurntToast| I
 ```
 
 #### 1. WSL → Windows Boundary
@@ -51,6 +52,11 @@ graph TB
 - **Risk**: Supply chain attacks via npm or PowerShell Gallery
 - **Mitigation**: Package signatures, checksums, and provenance
 - **Boundary Control**: HTTPS-only downloads and verified sources
+
+#### 5. PowerShell Gallery → Local System Boundary
+- **Risk**: Compromised BurntToast module during auto-installation
+- **Mitigation**: User consent required, CurrentUser scope only, official PowerShell Gallery
+- **Boundary Control**: No elevated privileges, user can decline auto-installation
 
 ### Attack Vectors and Mitigations
 
@@ -98,6 +104,19 @@ show-toast.sh --image "../../../../etc/passwd"
 - Minimal dependencies
 - BurntToast from official PowerShell Gallery only
 
+#### BurntToast Auto-Installation
+**Vector**: Malicious PowerShell module installed during auto-installation
+**Mitigations**:
+- Explicit user consent required before installation
+- CurrentUser scope only (no system-wide installation)
+- Official PowerShell Gallery as only source
+- User can decline and install manually
+- No elevated privileges during installation
+```bash
+# Auto-installation command (user scope only):
+Install-Module BurntToast -Scope CurrentUser -Force
+```
+
 #### Prompt Injection via Claude Code
 **Vector**: Malicious prompts causing code modification in project directories
 **Mitigations**:
@@ -144,8 +163,14 @@ Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 
 #### Module Installation Security
 ```powershell
+# Auto-installation (user consent required):
+# Performed by CLI installer with user prompt
+
 # Secure user-scope installation:
 Install-Module BurntToast -Scope CurrentUser -Force
+
+# Never system-wide (avoided):
+# Install-Module BurntToast -Scope AllUsers  # ❌ Requires elevation
 
 # Verification before use:
 Import-Module BurntToast -ErrorAction Stop
@@ -188,6 +213,10 @@ npm verify @claude/cctoast-wsl
 ```bash
 # ✅ Recommended installation:
 npx @claude/cctoast-wsl --global
+
+# ✅ Allow BurntToast auto-installation when prompted:
+# Installer will ask: "Install BurntToast module? [y/N]"
+# Answer 'y' for automatic user-scope installation
 
 # ✅ Verify package before installation:
 npm info @claude/cctoast-wsl
