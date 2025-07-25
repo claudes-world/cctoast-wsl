@@ -1,6 +1,6 @@
 ---
 allowed-tools: Bash(gh issues list:*), Bash(gh issues view:*), Bash(gh label list:*), Bash(gh label create:*)
-description: Load in GitHub Project Manager context.
+description: Load in GitHub Project Manager context and work on the next issue.
 argument-hint: Current issue number eg. `#123`
 ---
 
