@@ -5,7 +5,7 @@
  * with support for JSON with Comments (JSONC) format.
  */
 
-import { JsoncParser, ParseResult } from './jsonc-parser.js';
+import { JsoncParser, type ParseResult } from './jsonc-parser.js';
 import { promises as fs } from 'fs';
 import path from 'path';
 import os from 'os';
@@ -41,13 +41,14 @@ export class SettingsMerger {
    * Parse JSONC content into ClaudeSettings
    */
   async parseJsonc(content: string): Promise<ClaudeSettings> {
-    const result: ParseResult<ClaudeSettings> = this.jsonc.parse<ClaudeSettings>(content);
-    
+    const result: ParseResult<ClaudeSettings> =
+      this.jsonc.parse<ClaudeSettings>(content);
+
     if (result.errors.length > 0) {
       const errorMessages = result.errors.map(e => e.message).join('; ');
       throw new Error(`JSONC parsing failed: ${errorMessages}`);
     }
-    
+
     return result.data;
   }
 
@@ -59,12 +60,12 @@ export class SettingsMerger {
     updates: Partial<ClaudeSettings>,
     options: MergeOptions = {}
   ): Promise<ClaudeSettings> {
-    const {
-      deduplicateArrays = true,
-      preserveOrder = true,
-    } = options;
+    const { deduplicateArrays = true, preserveOrder = true } = options;
 
-    const result = this.deepMerge(existing, updates, { deduplicateArrays, preserveOrder });
+    const result = this.deepMerge(existing, updates, {
+      deduplicateArrays,
+      preserveOrder,
+    });
     return result;
   }
 
@@ -81,7 +82,7 @@ export class SettingsMerger {
     // Read existing content
     let existing: ClaudeSettings = {};
     let originalContent = '';
-    
+
     try {
       originalContent = await fs.readFile(filePath, 'utf-8');
       existing = await this.parseJsonc(originalContent);
@@ -137,11 +138,11 @@ export class SettingsMerger {
     // Handle objects
     if (this.isObject(target) && this.isObject(source)) {
       const result = this.deepClone(target) as Record<string, unknown>;
-      
+
       for (const [key, value] of Object.entries(source)) {
         result[key] = this.deepMerge(result[key], value, options);
       }
-      
+
       return result;
     }
 
@@ -158,7 +159,7 @@ export class SettingsMerger {
     options: { deduplicateArrays: boolean; preserveOrder: boolean }
   ): unknown[] {
     const result = [...target];
-    
+
     for (const item of source) {
       if (!options.deduplicateArrays || !this.arrayIncludes(result, item)) {
         if (options.preserveOrder) {
@@ -168,7 +169,7 @@ export class SettingsMerger {
         }
       }
     }
-    
+
     return result;
   }
 
@@ -184,7 +185,8 @@ export class SettingsMerger {
    */
   private isEqual(a: unknown, b: unknown): boolean {
     if (a === b) return true;
-    if (a === null || b === null || a === undefined || b === undefined) return false;
+    if (a === null || b === null || a === undefined || b === undefined)
+      return false;
     if (typeof a !== typeof b) return false;
 
     if (Array.isArray(a) && Array.isArray(b)) {
@@ -208,7 +210,7 @@ export class SettingsMerger {
   private deepClone(obj: unknown): unknown {
     if (obj === null || typeof obj !== 'object') return obj;
     if (Array.isArray(obj)) return obj.map(item => this.deepClone(item));
-    
+
     const cloned: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(obj)) {
       cloned[key] = this.deepClone(value);
@@ -226,7 +228,10 @@ export class SettingsMerger {
   /**
    * Create timestamped backup of original file
    */
-  private async createBackup(filePath: string, content: string): Promise<string> {
+  private async createBackup(
+    filePath: string,
+    content: string
+  ): Promise<string> {
     const dir = path.dirname(filePath);
     const basename = path.basename(filePath);
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -235,33 +240,39 @@ export class SettingsMerger {
 
     // Ensure backup directory exists
     await fs.mkdir(backupDir, { recursive: true });
-    
+
     // Write backup
     await fs.writeFile(backupPath, content, 'utf-8');
-    
+
     return backupPath;
   }
 
   /**
    * Write JSON content atomically (temp file -> fsync -> rename)
    */
-  private async writeAtomic(filePath: string, data: ClaudeSettings): Promise<void> {
+  private async writeAtomic(
+    filePath: string,
+    data: ClaudeSettings
+  ): Promise<void> {
     const dir = path.dirname(filePath);
-    const tempPath = path.join(dir, `.${path.basename(filePath)}.tmp.${Date.now()}`);
-    
+    const tempPath = path.join(
+      dir,
+      `.${path.basename(filePath)}.tmp.${Date.now()}`
+    );
+
     try {
       // Ensure directory exists
       await fs.mkdir(dir, { recursive: true });
-      
+
       // Write to temp file
       const content = JSON.stringify(data, null, 2);
       await fs.writeFile(tempPath, content, 'utf-8');
-      
+
       // Sync to disk
       const handle = await fs.open(tempPath, 'r+');
       await handle.sync();
       await handle.close();
-      
+
       // Atomic rename
       await fs.rename(tempPath, filePath);
     } catch (error) {

@@ -5,7 +5,7 @@
  * atomic operations and direct script path injection.
  */
 
-import { SettingsMerger, ClaudeSettings } from './settings-merger.js';
+import { SettingsMerger, type ClaudeSettings } from './settings-merger.js';
 import { promises as fs, constants } from 'fs';
 import path from 'path';
 import os from 'os';
