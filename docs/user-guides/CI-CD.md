@@ -59,7 +59,7 @@ Different testing strategies for different scenarios:
 graph TB
     A[Code Change] --> B{Event Type}
     B -->|Pull Request| C[2 Jobs: Ubuntu 20 + Windows 20]
-    B -->|Push to Main| D[3 Jobs: Ubuntu 18/20 + Windows 20]
+    B -->|Push to Main| D[3 Jobs: Ubuntu 18 + Ubuntu 20 + Windows 20]
     C --> E[Fast Feedback ~5 min]
     D --> F[Full Validation ~8 min]
 ```
