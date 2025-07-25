@@ -35,6 +35,19 @@ jobs:
           cache: 'npm'
           registry-url: 'https://registry.npmjs.org'
           
+      # Enhanced caching for release builds
+      - name: Cache build outputs
+        uses: actions/cache@v4
+        with:
+          path: |
+            bin/
+            coverage/
+            .esbuild/
+          key: release-build-${{ hashFiles('package*.json', 'src/**', 'tsconfig.json') }}
+          restore-keys: |
+            release-build-
+            ubuntu-latest-build-
+          
       - name: Verify release tag format
         run: |
           TAG=${GITHUB_REF#refs/tags/}
