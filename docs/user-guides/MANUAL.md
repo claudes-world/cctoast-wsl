@@ -83,6 +83,10 @@ which powershell.exe
 ```
 
 ### Install BurntToast Module
+
+> [!NOTE]  
+> The automated installer (`npx @claude/cctoast-wsl`) can auto-install BurntToast with user consent. Manual installation is only needed for manual setup.
+
 ```bash
 # Check if BurntToast is already installed
 powershell.exe -Command "Get-Module -ListAvailable -Name BurntToast"
@@ -209,9 +213,15 @@ chmod 500 ~/.claude/cctoast-wsl/show-toast.sh
 # Check PowerShell Gallery connectivity
 powershell.exe -Command "Test-Connection -ComputerName 'www.powershellgallery.com' -Count 1"
 
-# Force reinstall BurntToast if needed
+# If auto-installation failed during CLI setup, install manually
+powershell.exe -Command "Install-Module BurntToast -Scope CurrentUser -Force -AllowClobber"
+
+# Force reinstall BurntToast if corrupted
 powershell.exe -Command "Uninstall-Module BurntToast -Force"
 powershell.exe -Command "Install-Module BurntToast -Scope CurrentUser -Force -AllowClobber"
+
+# Check module version and location
+powershell.exe -Command "Get-Module -ListAvailable -Name BurntToast | Select-Object Name,Version,ModuleBase"
 ```
 
 ### Path Issues
@@ -272,9 +282,12 @@ if ! command -v powershell.exe >/dev/null; then
 fi
 
 # Check BurntToast module
-if ! powershell.exe -Command "Get-Module -ListAvailable -Name BurntToast" >/dev/null; then
+if ! powershell.exe -Command "Get-Module -ListAvailable -Name BurntToast" >/dev/null 2>&1; then
     echo "❌ BurntToast module not installed"
+    echo "   Run: powershell.exe -Command 'Install-Module BurntToast -Scope CurrentUser -Force'"
     exit 1
+else
+    echo "✅ BurntToast module available"
 fi
 
 # Check Claude settings

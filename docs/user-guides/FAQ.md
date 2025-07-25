@@ -52,6 +52,33 @@ This FAQ covers the most common issues users encounter when installing and using
 
 ---
 
+### ❌ Problem: Declined BurntToast auto-installation, now what?
+
+**Symptom**: Chose "No" when installer prompted to install BurntToast module automatically
+
+**Solution**:
+1. Install BurntToast manually:
+   ```bash
+   powershell.exe -Command "Install-Module BurntToast -Scope CurrentUser -Force"
+   ```
+2. Verify installation:
+   ```bash
+   powershell.exe -Command "Get-Module -ListAvailable -Name BurntToast"
+   ```
+3. Test notifications:
+   ```bash
+   ~/.claude/cctoast-wsl/show-toast.sh --title "Test" --message "BurntToast working"
+   ```
+
+**Alternative**: Re-run installer to get the auto-installation prompt again:
+```bash
+npx @claude/cctoast-wsl
+```
+
+**Why this works**: The installer respects your choice but requires BurntToast for notifications to work. Manual installation gives you full control over the process.
+
+---
+
 ### ❌ Problem: "Permission denied" when running script
 
 **Symptom**: Hook execution fails with permission denied error
@@ -340,6 +367,32 @@ npx @claude/cctoast-wsl --force
    ```
 
 **Why this works**: Corporate networks often block PowerShell Gallery. Manual methods bypass these restrictions.
+
+---
+
+### 🔧 Problem: Auto-installation fails with "execution policy" error
+
+**Symptom**: BurntToast auto-installation fails due to PowerShell execution policy restrictions
+
+**Solution**:
+1. Check current execution policy:
+   ```bash
+   powershell.exe -Command "Get-ExecutionPolicy -Scope CurrentUser"
+   ```
+2. Set execution policy for current user (no admin required):
+   ```bash
+   powershell.exe -Command "Set-ExecutionPolicy -Scope CurrentUser RemoteSigned"
+   ```
+3. Retry installation:
+   ```bash
+   npx @claude/cctoast-wsl
+   ```
+4. Or install BurntToast manually:
+   ```bash
+   powershell.exe -Command "Install-Module BurntToast -Scope CurrentUser -Force"
+   ```
+
+**Why this works**: Auto-installation respects PowerShell execution policies. Setting CurrentUser scope policy allows module installation without administrator rights.
 
 ---
 

@@ -270,8 +270,28 @@ Closes #2
 EOF
 )"
 
-# Add reviewers if needed
-gh pr edit --add-reviewer username
+# MANDATORY: Add @mcorrig4 as reviewer for all PRs
+gh pr edit --add-reviewer mcorrig4
+```
+
+#### 3. **MANDATORY**: Request Review from @mcorrig4
+**CRITICAL**: All PRs must be reviewed by @mcorrig4 as the development partner
+
+```bash
+# Always assign and tag @mcorrig4 as reviewer when creating PRs
+gh pr edit --add-assignee mcorrig4
+gh pr edit --add-reviewer mcorrig4
+
+# Comment on PR to notify reviewer
+gh pr comment --body "Hey @mcorrig4! 👋
+
+This PR is ready for your review when you have time.
+
+**What's Changed**: [Brief summary of key changes]
+**Testing Status**: [Brief status of testing completed]
+**Review Focus**: [Key areas that need attention]
+
+Thanks for taking a look! 🙏"
 ```
 
 ### PR Review Process
