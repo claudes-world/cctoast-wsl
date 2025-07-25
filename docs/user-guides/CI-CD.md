@@ -245,7 +245,7 @@ touch src/cli.ts && git add . && git commit --amend --no-edit
 
 ```bash
 # Check which files would trigger CI
-git diff --name-only origin/main | grep -E "(src/|scripts/|package.*\.json|tsconfig\.json|__tests__/)"
+git diff --name-only origin/main | grep -E "(src/|scripts/|package.*\.json|tsconfig\.json|__tests__/|\.github/workflows/ci\.yml)"
 
 # Test path filtering locally
 act -j test --dryrun  # Requires nektos/act
