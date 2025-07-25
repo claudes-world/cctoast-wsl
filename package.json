@@ -82,25 +82,11 @@
     "bats": "^1.11.0",
     "esbuild": "^0.25.8",
     "eslint": "^9.31.0",
+    "git-format-staged": "^3.1.1",
     "husky": "^9.1.7",
     "lint-staged": "^16.1.2",
     "prettier": "^3.6.2",
     "typescript": "^5.8.3",
     "vitest": "^2.1.4"
-  },
-  "lint-staged": {
-    "src/**/*.ts": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "scripts/*.sh": [
-      "shellcheck"
-    ],
-    "./*.{mjs,json}": [
-      "prettier --write"
-    ],
-    "src/**/*.{mjs,json}": [
-      "prettier --write"
-    ]
   }
 }
