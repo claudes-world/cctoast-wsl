@@ -1,0 +1,8 @@
+{
+    "session_id": "131a5446-d85c-48a3-86f3-4d5474251b59",
+    "transcript_path": "/home/liam/.claude/projects/-home-liam-code-cctoast-wsl/131a5446-d85c-48a3-86f3-4d5474251b59.jsonl",
+    "cwd": "/home/liam/code/cctoast-wsl",
+    "hook_event_name": "PreCompact",
+    "trigger": "auto",
+    "custom_instructions": null
+}
