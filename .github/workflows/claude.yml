@@ -1,4 +1,9 @@
+# ─────── '@claude' trigger: Issue, PR comment, or PR review ───────
 name: Claude Code
+# Tag @claude to trigger Claude agent inside issue, pull request, or comment
+# Only project owners can trigger Claude
+# Prevent bots from triggering Claude
+
 
 on:
   issue_comment:
@@ -6,18 +11,58 @@ on:
   pull_request_review_comment:
     types: [created]
   issues:
-    types: [opened, assigned]
+    types: [opened]
+    # types: [opened, assigned]
   pull_request_review:
     types: [submitted]
 
+env:
+  ALLOWED_USERS_JSON: '["mcorrig4"]'
+  # ALLOWED_USERS_JSON: '["mcorrig4","claude-do"]'
+  ALLOWED_AUTHOR_ASSOCIATION_JSON: '["OWNER"]'
+  # ─────── Claude's World & Chaintail Organization Repos ───────
+  REPOSITORY_OWNER_JSON: '["claudes-world","mcorrig4","claude-do","chaintail"]'
+
+
 jobs:
   claude:
-    # More specific conditions to reduce skipped runs and save CI minutes
     if: |
-      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude') && !github.event.comment.user.login == 'github-actions[bot]') ||
-      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude') && !github.event.comment.user.login == 'github-actions[bot]') ||
-      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude') && !github.event.review.user.login == 'github-actions[bot]') ||
-      (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')) && github.event.action == 'opened')
+      contains(fromJSON(env.REPOSITORY_OWNER_JSON), github.repository_owner) &&
+      (
+        (
+          github.event_name == 'issues' &&
+          github.event.action == 'opened' &&
+          (
+            contains(github.event.issue.title, '@claude') ||
+            contains(github.event.issue.body,  '@claude')
+          ) &&
+          (
+            contains(fromJSON(env.ALLOWED_USERS_JSON), github.event.issue.user.login) ||
+            contains(fromJSON(env.ALLOWED_AUTHOR_ASSOCIATION_JSON), github.event.issue.author_association)
+          )
+        ) ||
+        (
+          (
+            github.event_name == 'issue_comment' ||
+            github.event_name == 'pull_request_review_comment'
+          ) &&
+          contains(github.event.comment.body, '@claude') &&
+          (!contains(github.event.comment.body, '@claude review')) &&
+          (!contains(github.event.comment.body, '@claude please review')) &&
+          (
+            contains(fromJSON(env.ALLOWED_USERS_JSON), github.event.comment.user.login) ||
+            contains(fromJSON(env.ALLOWED_AUTHOR_ASSOCIATION_JSON), github.event.comment.author_association)
+          )
+        ) ||
+        (
+          github.event_name == 'pull_request_review' &&
+          contains(github.event.review.body, '@claude') &&
+          (
+            contains(fromJSON(env.ALLOWED_USERS_JSON), github.event.review.user.login) ||
+            contains(fromJSON(env.ALLOWED_AUTHOR_ASSOCIATION_JSON), github.event.review.author_association)
+          )
+        )
+      )
     runs-on: ubuntu-latest
     permissions:
       contents: read

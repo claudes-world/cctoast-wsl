@@ -1,0 +1,90 @@
+name: Claude Code Review
+
+on:
+  pull_request_review_comment:
+    types: [created]
+  issue_comment:
+    types: [created]
+
+
+    env:
+  ALLOWED_USERS_JSON: '["mcorrig4"]'
+  # ALLOWED_USERS_JSON: '["mcorrig4","claude-do"]'
+  ALLOWED_AUTHOR_ASSOCIATION_JSON: '["OWNER"]'
+  # ─────── Claude's World & Chaintail Organization Repos ───────
+  REPOSITORY_OWNER_JSON: '["claudes-world","mcorrig4","claude-do","chaintail"]'
+
+
+jobs:
+  claude-review:
+    # Only run when explicitly tagged for review by commenting "@claude review this"
+    if: |
+      contains(fromJSON(env.REPOSITORY_OWNER_JSON), github.repository_owner) &&
+      (
+        contains(fromJSON(env.ALLOWED_USERS_JSON), github.event.comment.user.login) ||
+        contains(fromJSON(env.ALLOWED_AUTHOR_ASSOCIATION_JSON), github.event.comment.author_association)
+      ) &&
+      (
+        (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude review')) ||
+        (github.event_name == 'issue_comment' && github.event.issue.pull_request && contains(github.event.comment.body, '@claude review')) ||
+        (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude please review')) ||
+        (github.event_name == 'issue_comment' && github.event.issue.pull_request && contains(github.event.comment.body, '@claude please review'))
+      )    
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+      id-token: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Code Review
+        id: claude-review
+        uses: anthropics/claude-code-action@beta
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
+          # Optional: Specify model (defaults to Claude Sonnet 4, uncomment for Claude Opus 4)
+          # model: "claude-opus-4-20250514"
+          
+          # Direct prompt for requested review
+          direct_prompt: |
+            Please review this pull request as requested and provide feedback on:
+            - Code quality and best practices
+            - Potential bugs or issues
+            - Performance considerations
+            - Security concerns
+            - Test coverage
+            
+            Be constructive and helpful in your feedback.
+
+          # Optional: Use sticky comments to make Claude reuse the same comment on subsequent pushes to the same PR
+          # use_sticky_comment: true
+          
+          # Optional: Customize review based on file types
+          # direct_prompt: |
+          #   Review this PR focusing on:
+          #   - For TypeScript files: Type safety and proper interface usage
+          #   - For API endpoints: Security, input validation, and error handling
+          #   - For React components: Performance, accessibility, and best practices
+          #   - For tests: Coverage, edge cases, and test quality
+          
+          # Optional: Different prompts for different authors
+          # direct_prompt: |
+          #   ${{ github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR' && 
+          #   'Welcome! Please review this PR from a first-time contributor. Be encouraging and provide detailed explanations for any suggestions.' ||
+          #   'Please provide a thorough code review focusing on our coding standards and best practices.' }}
+          
+          # Optional: Add specific tools for running tests or linting
+          # allowed_tools: "Bash(npm run test),Bash(npm run lint),Bash(npm run typecheck)"
+          
+          # Optional: Skip review for certain conditions
+          # if: |
+          #   !contains(github.event.pull_request.title, '[skip-review]') &&
+          #   !contains(github.event.pull_request.title, '[WIP]')
+
