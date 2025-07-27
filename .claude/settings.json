@@ -18,5 +18,92 @@
   ],
   "disabledMcpjsonServers": [
     "taskmaster-ai"
-  ]
+  ],
+  "hooks": {
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -Command \"Import-Module BurntToast; New-BurntToastNotification -Text 'Claude Code Notification', '$(cat | jq -r '.message' | sed 's/`/``/g; s/\\\\\\\"/``\\\\\\\"/g')'\""
+          },
+          {
+            "type": "command",
+            "command": "tee -a $CLAUDE_PROJECT_DIR/docs/ref/hook_notification_example_input.txt >/dev/null"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -Command \"Import-Module BurntToast; New-BurntToastNotification -Text 'Claude Code', 'DONE'\""
+          },
+          {
+            "type": "command",
+            "command": "tee -a $CLAUDE_PROJECT_DIR/docs/ref/hook_stop_example_input.txt >/dev/null"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "tee -a $CLAUDE_PROJECT_DIR/docs/ref/hook_precompact_example_input.txt >/dev/null"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "tee -a $CLAUDE_PROJECT_DIR/docs/ref/hook_pretooluse_example_input.txt >/dev/null"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "tee -a $CLAUDE_PROJECT_DIR/docs/ref/hook_posttooluse_example_input.txt >/dev/null"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "tee -a $CLAUDE_PROJECT_DIR/docs/ref/hook_userpromptsubmit_example_input.txt >/dev/null"
+          }
+        ]
+      }
+    ],
+    "SubAgentStop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "tee -a $CLAUDE_PROJECT_DIR/docs/ref/hook_subagentstop_example_input.txt >/dev/null"
+          }
+        ]
+      }
+    ]
+  }
 }
