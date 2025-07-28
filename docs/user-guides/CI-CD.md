@@ -106,17 +106,19 @@ git commit -m "chore: update eslint config [skip-ci]"
 git commit -m "chore: add vscode settings [skip-ci]"
 ```
 
-### Skip Review: `[skip-review]`
+### Request Claude Review: `@claude review`
 
-Add to PR titles or descriptions to bypass Claude Code Review:
+Claude Code Review now only runs when explicitly requested:
 
 ```bash
-# Simple docs fix
-gh pr create --title "docs: fix typo in README [skip-review]"
+# Request a review by commenting on a PR
+gh pr comment <pr-number> --body "@claude review this PR please"
 
-# Emergency patch
-gh pr create --title "fix: security patch" --body "Urgent [skip-review]"
+# Or comment directly in the GitHub UI
+# "@claude review - focus on security and performance"
 ```
+
+**Note**: The `[skip-review]` flag is no longer needed since reviews are manual-only.
 
 ## 📋 Workflow Details
 
@@ -169,10 +171,10 @@ gh pr create --title "fix: security patch" --body "Urgent [skip-review]"
 
 #### Claude Code Review (`claude-code-review.yml`)
 **Optimizations**:
-- Only runs on code file changes (`.ts`, `.js`, `.sh`)
-- Skips documentation-only PRs
-- Excludes bot PRs automatically
-- Supports `[skip-review]` flag
+- **Manual trigger only**: Only runs when explicitly requested with `@claude review`
+- No automatic reviews on every PR (saves significant CI minutes)
+- Works on both PR comments and review comments
+- Reduces unnecessary AI reviews for simple changes
 
 ## 🛠️ Best Practices
 
@@ -231,11 +233,9 @@ touch src/cli.ts && git add . && git commit --amend --no-edit
 - Consider updating minimum Node.js version
 
 #### "Claude Code Review didn't trigger"
-**Cause**: Multiple possible reasons
-**Check**:
-1. Did you only change docs? (Review only runs on code)
-2. Is `[skip-review]` in PR title/body?
-3. Are you a bot user? (Bots are excluded)
+**Cause**: Reviews are now manual-only
+**Solution**: Request a review by commenting `@claude review` on the PR
+**Note**: This is intentional to save CI minutes - reviews only run when explicitly requested
 
 #### "Benchmarks are missing from PR"
 **Expected**: Benchmarks only run on main branch pushes to save CI minutes

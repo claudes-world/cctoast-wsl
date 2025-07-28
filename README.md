@@ -182,6 +182,8 @@ powershell.exe -Command "Get-Module -ListAvailable -Name BurntToast"
 - **[Contributing Guide](CONTRIBUTING.md)** - Development environment and contribution guidelines
 - **[Architecture](docs/ai_docx/ARCHITECTURE.md)** - System design and technical decisions
 - **[Developer Workflow](docs/ai_docx/DEVELOPER_WORKFLOW.md)** - Setup, testing, and debugging
+- **[Documentation Style Guide](docs/ai_docx/DOCUMENTATION_STYLE_GUIDE.md)** - Writing guidelines for human and LLM readers
+- **[Writing Docs for AI](docs/ai_docx/WRITING_DOCS_FOR_AI.md)** - Framework for LLM-facing documentation
 
 ### Technical Specifications
 - **[Product Requirements](docs/ai_docx/PRD.md)** - Complete specifications and success metrics

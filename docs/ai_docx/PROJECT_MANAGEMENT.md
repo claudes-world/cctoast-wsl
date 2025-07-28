@@ -239,12 +239,23 @@ git commit -m "chore: update IDE settings [skip-ci]"
 
 #### Skip Code Reviews
 Add `[skip-review]` to PR titles or descriptions to bypass Claude Code Review:
+
 ```bash
 # Skip automated code review for simple docs changes
 gh pr create --title "docs: fix typo in README [skip-review]"
 
 # Skip review for urgent hotfixes that need immediate merge
 gh pr create --title "fix: critical security patch" --body "Urgent fix [skip-review]"
+```
+
+#### Request Claude Code Reviews
+Claude Code Review is now manual-only. Request reviews by commenting on PRs:
+```bash
+# Request a review on a PR
+gh pr comment <pr-number> --body "@claude review this PR"
+
+# Request focused review
+gh pr comment <pr-number> --body "@claude review - focus on security and performance"
 ```
 
 #### When to Use Skip Flags
@@ -254,13 +265,13 @@ gh pr create --title "fix: critical security patch" --body "Urgent fix [skip-rev
 - Modifying CI workflow files themselves (test separately)
 - Making changes that don't affect code functionality
 
-**Use `[skip-review]` when**:
-- Simple documentation fixes or typos
-- Automated dependency updates (Dependabot)
-- Emergency hotfixes requiring immediate deployment
-- Changes to non-code files (configs, docs, assets)
+**When to request `@claude review`**:
+- Complex code changes that could benefit from AI analysis
+- Security-sensitive modifications
+- Performance-critical updates
+- When you want a second opinion on implementation approach
 
-**⚠️ Caution**: Skip flags should be used judiciously. Most code changes should go through full CI and review processes.
+**⚠️ Note**: Claude Code Review is now manual-only to save CI minutes. The `[skip-review]` flag is no longer needed since reviews don't run automatically.
 
 ---
 
