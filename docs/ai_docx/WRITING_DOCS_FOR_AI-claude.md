@@ -1,5 +1,7 @@
 # Guidelines for Writing LLM-Facing Documentation
 
+> Updated: 2025-07-27
+
 Guidelines for writing docs that are primarily LLM-facing (read by AI agents) that are well organized, informationally dense, and efficient.
 
 This is a thinking framework, not a rulebook. It provides mental models and principles to help you create reference material that enables LLMs to understand context quickly, act appropriately, and avoid predictable errors. Apply these guidelines with judgment, adapting them to your specific needs.
@@ -67,7 +69,7 @@ Clarification: "Break guidelines consciously, not accidentally"
 
 The power lies in the self-similarity. Once an LLM recognizes this pattern, it can efficiently parse information at any level of detail.
 
-## 3. Defining Success (From the LLM's Perspective)
+## 3. Defining Success (From the consumer agent's perspective)
 
 > **Mission**: Enable an LLM to understand context, act correctly, and avoid predictable errors while building on successes and learning from failures.
 
@@ -399,4 +401,6 @@ Success = Three distinct voice samples that feel fresh but still "us"
 
 ## Meta Note
 
-This guide demonstrates its own principles: clear Guide intent helping you build judgment about writing for LLMs, fractal structure with Context-Directives-Clarification at multiple levels, strategic verbosity where examples add value, and progressive disclosure from principles to practice. Headers aid navigation, not ceremony. Every token earned its place. Updated 2025-07-27 to incorporate the why/how/what else mental model for intuitive understanding of Information Units.
+*This guide demonstrates its own principles: clear Guide intent helping you build judgment about writing for LLMs, fractal structure with Context-Directives-Clarification at multiple levels, strategic verbosity where examples add value, and progressive disclosure from principles to practice. Headers aid navigation, not ceremony.*
+
+***Every token earned its place.***
