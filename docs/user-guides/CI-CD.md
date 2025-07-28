@@ -4,15 +4,14 @@ This guide explains the optimized CI/CD workflows for cctoast-wsl, designed to r
 
 ## 🎯 Overview
 
-The cctoast-wsl project uses **5 optimized GitHub Actions workflows** that work together to provide fast feedback for development while ensuring thorough testing for releases:
+The cctoast-wsl project uses **4 optimized GitHub Actions workflows** that work together to provide fast feedback for development while ensuring thorough testing for releases:
 
 | Workflow | Purpose | Trigger | Optimization Level |
 |----------|---------|---------|-------------------|
 | **CI** | Build, test, lint | Push/PR to main | High - Smart matrix |
 | **Release Please** | Version management | Push to main | Medium - Path filtered |
 | **Release** | Publish packages | Version tags | Low - Full validation |
-| **Claude Code** | AI assistance | @claude mentions | High - Targeted triggers |
-| **Claude Code Review** | Automated reviews | PRs with code | High - Code-only |
+| **Claude Code** | AI assistance & reviews | @claude mentions | High - Unified triggers |
 
 ## 📊 Optimization Results
 
@@ -108,17 +107,20 @@ git commit -m "chore: add vscode settings [skip-ci]"
 
 ### Request Claude Review: `@claude review`
 
-Claude Code Review now only runs when explicitly requested:
+Claude Code Review is now integrated into the main Claude workflow and only runs when explicitly requested:
 
 ```bash
 # Request a review by commenting on a PR
 gh pr comment <pr-number> --body "@claude review this PR please"
 
+# Alternative polite form
+gh pr comment <pr-number> --body "@claude please review - focus on security"
+
 # Or comment directly in the GitHub UI
 # "@claude review - focus on security and performance"
 ```
 
-**Note**: The `[skip-review]` flag is no longer needed since reviews are manual-only.
+**Note**: Reviews use the same unified workflow as general Claude interactions, with intelligent detection of review requests.
 
 ## 📋 Workflow Details
 
@@ -161,20 +163,33 @@ gh pr comment <pr-number> --body "@claude review this PR please"
 - Generates changelogs from conventional commits
 - Auto-merges when CI passes
 
-### Claude Workflows
+### Claude Workflow
 
-#### Claude Code (`claude.yml`)
-**Optimizations**:
-- Only responds to human @claude mentions (not bots)
-- Filters out repetitive triggers
-- Specific event conditions to reduce skipped runs
+#### Claude Code (`claude.yml`) - Unified Workflow
+**Major Update**: Consolidated three separate Claude workflows into a single unified workflow, eliminating 95% code duplication while maintaining all functionality.
 
-#### Claude Code Review (`claude-code-review.yml`)
+**Key Features**:
+- **Unified triggers**: Handles both general @claude interactions and code reviews
+- **Intelligent detection**: Automatically determines if `@claude review` was requested
+- **Security controls**: Consistent user authorization across all interactions
+- **Manual reviews only**: Code reviews only run when explicitly requested to save CI minutes
+- **Backward compatible**: All existing `@claude` usage patterns work unchanged
+
 **Optimizations**:
-- **Manual trigger only**: Only runs when explicitly requested with `@claude review`
-- No automatic reviews on every PR (saves significant CI minutes)
-- Works on both PR comments and review comments
-- Reduces unnecessary AI reviews for simple changes
+- Single workflow eliminates maintenance overhead of multiple files
+- Smart branching logic for different interaction types
+- Prevents trigger conflicts and edge cases
+- Reduces skipped workflow runs through better conditions
+
+**Interaction Types**:
+1. **General assistance**: `@claude` in issues, comments, reviews
+2. **Code reviews**: `@claude review` or `@claude please review` in PR contexts
+
+**Benefits of Consolidation**:
+- ✅ Single source of truth for maintenance
+- ✅ Consistent security model across all Claude features  
+- ✅ Eliminates potential conflicts between workflows
+- ✅ Simplified debugging and monitoring
 
 ## 🛠️ Best Practices
 
@@ -233,8 +248,8 @@ touch src/cli.ts && git add . && git commit --amend --no-edit
 - Consider updating minimum Node.js version
 
 #### "Claude Code Review didn't trigger"
-**Cause**: Reviews are now manual-only
-**Solution**: Request a review by commenting `@claude review` on the PR
+**Cause**: Reviews are now manual-only and integrated into the unified Claude workflow
+**Solution**: Request a review by commenting `@claude review` or `@claude please review` on the PR
 **Note**: This is intentional to save CI minutes - reviews only run when explicitly requested
 
 #### "Benchmarks are missing from PR"
