@@ -1,0 +1,24 @@
+{
+  "wsl-environment": {
+    "name": "wsl-environment",
+    "passed": true,
+    "fatal": true,
+    "message": "Detected WSL2 environment",
+    "timestamp": 1705316400000
+  },
+  "powershell-exe": {
+    "name": "powershell-exe",
+    "passed": true,
+    "fatal": true,
+    "message": "PowerShell available at /mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe",
+    "timestamp": 1705316400000
+  },
+  "burnttoast-module": {
+    "name": "burnttoast-module",
+    "passed": false,
+    "fatal": true,
+    "message": "BurntToast module not installed",
+    "remedy": "Install-Module BurntToast -Scope CurrentUser -Force",
+    "timestamp": 1705316400000
+  }
+}

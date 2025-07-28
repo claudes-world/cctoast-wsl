@@ -1,0 +1,15 @@
+{
+  // Local project settings
+  "hooks": {
+    "notification": [
+      ".claude/cctoast-wsl/show-toast.sh --notification-hook"
+    ],
+    "stop": [
+      ".claude/cctoast-wsl/show-toast.sh --stop-hook"
+    ]
+  },
+  "workspace": {
+    "paths": ["."],
+    "excludePaths": ["node_modules", ".git"]
+  }
+}

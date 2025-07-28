@@ -1,0 +1,10 @@
+{
+  "hooks": {
+    "notification": [],
+    "stop": []
+  },
+  "workspace": {
+    "paths": ["."]
+  },
+  "version": "1.0.0"
+}

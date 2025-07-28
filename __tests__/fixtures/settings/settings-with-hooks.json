@@ -1,0 +1,37 @@
+{
+  // Claude settings with existing hooks
+  "hooks": {
+    "notification": [
+      "/existing/notification/hook.sh"
+    ],
+    "stop": [
+      "/existing/stop/hook.py"
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'Pre-tool validation'"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npm run format"
+          }
+        ]
+      }
+    ]
+  },
+  "workspace": {
+    "paths": ["."]
+  },
+  "version": "1.0.0"
+}

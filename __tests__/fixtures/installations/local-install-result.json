@@ -1,0 +1,24 @@
+{
+  "action": "install",
+  "scope": "local",
+  "hooks": {
+    "notification": true,
+    "stop": false
+  },
+  "settings": {
+    "sync": false,
+    "dryRun": false,
+    "force": false,
+    "quiet": false
+  },
+  "success": true,
+  "message": "Local installation completed successfully",
+  "filesCreated": [
+    "/home/user/project/.claude/cctoast-wsl/show-toast.sh",
+    "/home/user/project/.claude/cctoast-wsl/assets/claude.png"
+  ],
+  "settingsModified": [
+    "/home/user/project/.claude/settings.local.json"
+  ],
+  "timestamp": 1705316400000
+}

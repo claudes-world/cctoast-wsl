@@ -1,0 +1,24 @@
+{
+  "action": "install",
+  "scope": "global",
+  "hooks": {
+    "notification": true,
+    "stop": true
+  },
+  "settings": {
+    "sync": false,
+    "dryRun": false,
+    "force": false,
+    "quiet": false
+  },
+  "success": true,
+  "message": "Global installation completed successfully",
+  "filesCreated": [
+    "/home/user/.claude/cctoast-wsl/show-toast.sh",
+    "/home/user/.claude/cctoast-wsl/assets/claude.png"
+  ],
+  "settingsModified": [
+    "/home/user/.claude/settings.json"
+  ],
+  "timestamp": 1705316400000
+}

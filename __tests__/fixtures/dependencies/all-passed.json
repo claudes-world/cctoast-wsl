@@ -1,0 +1,44 @@
+{
+  "wsl-environment": {
+    "name": "wsl-environment",
+    "passed": true,
+    "fatal": true,
+    "message": "Detected WSL2 environment",
+    "timestamp": 1705316400000
+  },
+  "powershell-exe": {
+    "name": "powershell-exe",
+    "passed": true,
+    "fatal": true,
+    "message": "PowerShell available at /mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe",
+    "timestamp": 1705316400000
+  },
+  "burnttoast-module": {
+    "name": "burnttoast-module",
+    "passed": true,
+    "fatal": true,
+    "message": "BurntToast module version 0.8.5 installed",
+    "timestamp": 1705316400000
+  },
+  "execution-policy": {
+    "name": "execution-policy",
+    "passed": true,
+    "fatal": false,
+    "message": "Execution policy is RemoteSigned",
+    "timestamp": 1705316400000
+  },
+  "jq-binary": {
+    "name": "jq-binary",
+    "passed": true,
+    "fatal": false,
+    "message": "jq version 1.6 available",
+    "timestamp": 1705316400000
+  },
+  "claude-directory": {
+    "name": "claude-directory",
+    "passed": true,
+    "fatal": false,
+    "message": "Claude directory exists at ~/.claude",
+    "timestamp": 1705316400000
+  }
+}
