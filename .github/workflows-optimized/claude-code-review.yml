@@ -1,0 +1,86 @@
+name: Claude Code Review (Optimized)
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    # OPTIMIZATION: Only run on code changes, not documentation
+    paths:
+      - "src/**/*.ts"
+      - "src/**/*.tsx"
+      - "src/**/*.js"
+      - "src/**/*.jsx"
+      - "scripts/**/*.sh"
+      - "__tests__/**"
+      - "package*.json"
+      - "tsconfig.json"
+
+jobs:
+  claude-review:
+    # OPTIMIZATION: More targeted conditions to reduce unnecessary runs
+    if: |
+      !contains(github.event.pull_request.title, '[skip-review]') &&
+      !contains(github.event.pull_request.title, '[WIP]') &&
+      !contains(github.event.pull_request.title, 'chore: release') &&
+      github.event.pull_request.draft == false &&
+      (
+        github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR' ||
+        github.event.pull_request.author_association == 'CONTRIBUTOR' ||
+        contains(github.event.pull_request.labels.*.name, 'needs-review')
+      )
+    
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+      id-token: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Code Review
+        id: claude-review
+        uses: anthropics/claude-code-action@beta
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
+          # Optional: Specify model (defaults to Claude Sonnet 4, uncomment for Claude Opus 4)
+          # model: "claude-opus-4-20250514"
+          
+          # OPTIMIZATION: Targeted review prompt based on file changes
+          direct_prompt: |
+            Please review this pull request focusing on:
+            
+            **Code Quality & Standards:**
+            - TypeScript best practices and type safety
+            - Security considerations (especially for shell scripts and PowerShell integration)
+            - Performance implications
+            - Error handling and edge cases
+            
+            **Project-Specific:**
+            - WSL/Windows compatibility for toast notifications
+            - BurntToast PowerShell module integration
+            - CLI flag handling and user experience
+            - Test coverage for new functionality
+            
+            **CI/CD Efficiency:**
+            - Changes that might affect GitHub Actions minutes usage
+            - Build performance implications
+            - Test execution time impact
+            
+            Be constructive and focus on high-impact issues. For first-time contributors, provide detailed explanations.
+
+          # OPTIMIZATION: Use sticky comments to avoid spam
+          use_sticky_comment: true
+          
+          # OPTIMIZATION: Restrict tools for review-only mode
+          allowed_tools: "Read,Grep,Glob"
+          
+          # Custom instructions for reviews
+          custom_instructions: |
+            This is a code review context. Focus on providing feedback without implementing changes.
+            Reference specific file paths and line numbers when providing suggestions.
+            Consider the project's CI/CD optimization goals when reviewing workflow changes.
