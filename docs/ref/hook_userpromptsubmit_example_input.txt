@@ -1,0 +1,1 @@
+{"session_id":"521e5f8d-08a9-4abc-a707-d7eb63b4f639","transcript_path":"/home/liam/.claude/projects/-home-liam-code-cctoast-wsl/521e5f8d-08a9-4abc-a707-d7eb63b4f639.jsonl","cwd":"/home/liam/code/cctoast-wsl","hook_event_name":"UserPromptSubmit","prompt":"commit and push"}

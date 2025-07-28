@@ -475,7 +475,8 @@ export async function mergeSettings(
 ```
 
 #### User Documentation
-- Follow the [Documentation Style Guide](docs/DOCUMENTATION_STYLE_GUIDE.md)
+- Follow the [Documentation Style Guide](docs/ai_docx/DOCUMENTATION_STYLE_GUIDE.md)
+- For LLM-facing docs, use the [Writing Docs for AI](docs/ai_docx/WRITING_DOCS_FOR_AI.md) framework
 - Use **visual formatting** (alerts, tables, code blocks)
 - Include **working examples**
 - Test all code examples
@@ -676,6 +677,8 @@ Releases are automated using **release-please**:
 
 - **[Architecture Guide](docs/ai_docx/ARCHITECTURE.md)**: Technical design and decisions
 - **[Developer Workflow](docs/ai_docx/DEVELOPER_WORKFLOW.md)**: Detailed development procedures
+- **[Documentation Style Guide](docs/ai_docx/DOCUMENTATION_STYLE_GUIDE.md)**: Writing guidelines for human and LLM readers
+- **[Writing Docs for AI](docs/ai_docx/WRITING_DOCS_FOR_AI.md)**: Framework for creating LLM-facing documentation
 - **[CI/CD Workflows](docs/user-guides/CI-CD.md)**: Optimized workflows, path filtering, and control flags
 - **[FAQ](docs/user-guides/FAQ.md)**: Common questions and troubleshooting
 - **[Security Guide](docs/user-guides/SECURITY.md)**: Security considerations

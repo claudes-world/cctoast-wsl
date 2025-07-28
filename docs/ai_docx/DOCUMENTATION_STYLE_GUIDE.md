@@ -2,7 +2,7 @@
 
 This guide ensures consistency across all cctoast-wsl documentation and provides best practices for creating engaging, readable content.
 
-## Writing Principles
+## Audience-Specific Guidelines
 
 ### For Human Readers
 > [!IMPORTANT]  
@@ -12,12 +12,17 @@ This guide ensures consistency across all cctoast-wsl documentation and provides
 - **Make it visual**: Use diagrams, tables, code blocks, and formatting
 - **Stay interesting**: Avoid walls of text, use varied formatting
 - **Be scannable**: Headers, bullets, callouts, and white space
+- **Show, don't tell**: Prefer examples over explanations
 
-### For LLM Readers (CLAUDE.md)
+### For LLM/agent Readers (CLAUDE.md, Technical Specs)
 - **Be comprehensive**: Include all critical implementation details
 - **Stay factual**: No marketing language, just specifications
 - **Be specific**: Exact file paths, complete API references
 - **Focus on context**: What the LLM needs to understand to work effectively
+
+> [!NOTE]  
+> For comprehensive LLM documentation guidance, see [WRITING_DOCS_FOR_AI.md](WRITING_DOCS_FOR_AI.md)
+
 
 ## Markdown Formatting Techniques
 
