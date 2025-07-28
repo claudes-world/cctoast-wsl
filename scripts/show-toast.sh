@@ -357,12 +357,15 @@ execute_notification() {
     local message="$2"
     local icon="$3"
     
-    # Escape parameters for PowerShell
-    local esc_title esc_message esc_icon esc_log
+    # Convert and escape parameters for PowerShell
+    local esc_title esc_message esc_icon esc_log converted_log
     esc_title=$(escape_ps "$title")
     esc_message=$(escape_ps "$message")
     esc_icon=$(escape_ps "$icon")
-    esc_log=$(escape_ps "$LOG")
+    
+    # Convert log path from WSL to Windows format
+    converted_log=$(convert_path_cached "$LOG")
+    esc_log=$(escape_ps "$converted_log")
     
     # Generate the PowerShell script with escaped parameters
     local ps_script_content
