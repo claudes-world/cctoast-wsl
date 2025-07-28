@@ -220,4 +220,5 @@ gh issue edit <N> --label "in-progress"
 ## Best Practices and Guidelines
 
 - Avoid using emojis in docs unless told to
+- **Use Glob, Search built-in tools, or Bash(rg) (ripgrep) instead of using grep and find**
 ```
