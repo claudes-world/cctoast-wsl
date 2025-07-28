@@ -23,36 +23,6 @@
     "taskmaster-ai"
   ],
   "hooks": {
-    "Notification": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "powershell.exe -Command \"Import-Module BurntToast; New-BurntToastNotification -Text 'Claude Code Notification', '$(cat | jq -r '.message' | sed 's/`/``/g; s/\\\\\\\"/``\\\\\\\"/g')'\""
-          },
-          {
-            "type": "command",
-            "command": "tee -a $CLAUDE_PROJECT_DIR/docs/ref/hook_notification_example_input.txt >/dev/null"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "powershell.exe -Command \"Import-Module BurntToast; New-BurntToastNotification -Text 'Claude Code', 'DONE'\""
-          },
-          {
-            "type": "command",
-            "command": "tee -a $CLAUDE_PROJECT_DIR/docs/ref/hook_stop_example_input.txt >/dev/null"
-          }
-        ]
-      }
-    ],
     "PreCompact": [
       {
         "matcher": "",
