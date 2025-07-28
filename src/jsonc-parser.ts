@@ -1,6 +1,6 @@
 /**
  * JSONC Parser
- * 
+ *
  * Parses JSON with Comments (JSONC) format while preserving formatting
  * and providing detailed error reporting with line/column information.
  */
@@ -36,11 +36,11 @@ export class JsoncParser {
   /**
    * Parse JSONC content with comment support
    */
-  parse<T = unknown>(content: string, options: JsoncParseOptions = {}): ParseResult<T> {
-    const {
-      allowComments = true,
-      stripComments = true,
-    } = options;
+  parse<T = unknown>(
+    content: string,
+    options: JsoncParseOptions = {}
+  ): ParseResult<T> {
+    const { allowComments = true, stripComments = true } = options;
 
     this.content = content;
     this.position = 0;
@@ -50,7 +50,7 @@ export class JsoncParser {
 
     try {
       let processedContent = content;
-      
+
       if (allowComments && stripComments) {
         processedContent = this.stripComments(content);
       }
@@ -63,7 +63,7 @@ export class JsoncParser {
       } else {
         this.addError('Unknown parsing error');
       }
-      
+
       // Try to recover with an empty object
       return { data: {} as T, errors: this.errors };
     }
@@ -125,7 +125,9 @@ export class JsoncParser {
         }
 
         if (!found) {
-          this.addError(`Unterminated multi-line comment starting at line ${startLine}, column ${startColumn}`);
+          this.addError(
+            `Unterminated multi-line comment starting at line ${startLine}, column ${startColumn}`
+          );
         }
         continue;
       }
@@ -140,13 +142,13 @@ export class JsoncParser {
         while (i < content.length) {
           const stringChar = content[i];
           result += stringChar;
-          
+
           if (stringChar === '"' && content[i - 1] !== '\\') {
             i++;
             column++;
             break;
           }
-          
+
           if (stringChar === '\n') {
             line++;
             column = 1;
@@ -179,7 +181,7 @@ export class JsoncParser {
     // Try to extract position information from common JSON error messages
     const positionMatch = message.match(/at position (\d+)/);
     if (positionMatch) {
-      const position = parseInt(positionMatch[1], 10);
+      const position = parseInt(positionMatch[1]!, 10);
       const { line, column } = this.getLineColumn(position);
       return `JSON syntax error at line ${line}, column ${column}: ${message}`;
     }
