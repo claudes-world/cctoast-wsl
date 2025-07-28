@@ -5,4 +5,4 @@
     "hook_event_name": "PreCompact",
     "trigger": "auto",
     "custom_instructions": null
-}
+}{"session_id":"8cf34007-0a99-47dc-8273-e377417762e1","transcript_path":"/home/liam/.claude/projects/-home-liam-code-cctoast-wsl/8cf34007-0a99-47dc-8273-e377417762e1.jsonl","cwd":"/home/liam/code/cctoast-wsl/worktree-issue10","hook_event_name":"PreCompact","trigger":"auto","custom_instructions":null}
