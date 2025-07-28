@@ -184,7 +184,7 @@ After running the tests above, evaluate the toast notifications:
 wsl.exe --version || wsl.exe -l -v
 
 # Test path conversion in your specific WSL environment
-CCTOAST_DEBUG=1 ./scripts/show-toast.sh --title "WSL Version Test" --message "Testing $(wsl.exe -l -v | head -1)" --image "./assets/claude.png"
+CCTOAST_DEBUG=1 ./scripts/show-toast.sh --title "WSL Environment Test" --message "Path conversion test in WSL2" --image "./assets/claude.png"
 ```
 **Expected Behavior:**
 - Should work regardless of WSL1 or WSL2
