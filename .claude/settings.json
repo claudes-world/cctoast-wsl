@@ -1,0 +1,60 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:docs.anthropic.com)",
+      "Bash(gh issue list:*)",
+      "Bash(gh issue view:*)",
+      "Bash(gh label list:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh milestone list:*)",
+      "Bash(gh milestone view:*)",
+      "Bash(gh workflow list:*)"
+    ],
+    "deny": [
+      "Bash(git reset --hard:*)"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "sequential-thinking",
+    "context7"
+  ],
+  "disabledMcpjsonServers": [
+    "taskmaster-ai"
+  ],
+  "hooks": {
+    "PreCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "tee -a $CLAUDE_PROJECT_DIR/docs/ref/hook_precompact_example_input.txt >/dev/null"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "tee -a $CLAUDE_PROJECT_DIR/docs/ref/hook_userpromptsubmit_example_input.txt >/dev/null"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "tee -a $CLAUDE_PROJECT_DIR/docs/ref/hook_subagentstop_example_input.txt >/dev/null"
+          }
+        ]
+      }
+    ]
+  }
+}

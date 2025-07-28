@@ -17,6 +17,7 @@ When working on this project, always consult these key documentation files:
 
 **Documentation & Writing Text:**
 - @docs/ai_docx/DOCUMENTATION_STYLE_GUIDE.md - Writing and formatting guidelines for all project documentation. Essential for creating engaging, scannable content with proper markdown formatting, visual elements, and structure patterns. Always reference before updating README or other user-facing docs.
+- @docs/ai_docx/WRITING_DOCS_FOR_AI.md - Comprehensive framework for writing LLM-facing documentation. Provides fractal Information Unit pattern, three Intent Modes (Constrain/Guide/Explore), and strategic verbosity principles. Critical for creating token-efficient, context-rich documentation that enables AI agents to understand quickly and act appropriately.
 
 **Manpage & Reference Docs:**
 - @docs/ref/BurntToast_manpage.txt - PowerShell BurntToast module documentation for creating Windows toast notifications. Reference for understanding the underlying notification API.
@@ -31,6 +32,14 @@ Always ensure implementations align with these specifications and follow the est
   - Ensures clear attribution and accountability
   - Helps track individual contributions
   - Demonstrates professional communication
+
+### Required Signature Format
+All git commits, GitHub issue comments, and PR comments must include:
+```
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude-do <claude@claude.do>, Claude <noreply@anthropic.com>
+```
 
 ## 🧪 Interactive Feature Testing Protocol
 

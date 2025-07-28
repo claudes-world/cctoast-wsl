@@ -225,6 +225,9 @@ git commit -m "style: fix formatting in CLI parser module"
 
 6. **Test manually** in WSL environment
 
+> [!TIP]  
+> **Workflow Control**: Use `[skip-ci]` in commit messages for docs-only changes. To request AI code review, comment `@claude review` on your PR. See [CI/CD Workflows](docs/user-guides/CI-CD.md) for details.
+
 ### Creating the PR
 
 1. **Push your branch**:
@@ -380,6 +383,25 @@ teardown() {
     
     assert_success
 }
+
+@test "should auto-install BurntToast when missing" {
+    # Mock PowerShell to simulate missing module
+    function powershell.exe() {
+        if [[ "$*" == *"Get-Module"* ]]; then
+            return 1  # Module not found
+        elif [[ "$*" == *"Install-Module"* ]]; then
+            echo "Installing BurntToast..." > "$TEST_DIR/install.log"
+            return 0  # Installation succeeded
+        fi
+        echo "Module installed" > "$TEST_DIR/notification.log"
+    }
+    export -f powershell.exe
+    
+    run ./scripts/show-toast.sh --title "Test"
+    
+    assert_success
+    assert_file_contains "$TEST_DIR/install.log" "Installing BurntToast"
+}
 ```
 
 ### Coverage Requirements
@@ -388,6 +410,35 @@ teardown() {
 - **Critical paths**: 100% coverage
 - **New features**: Must include tests
 - **Bug fixes**: Must include regression tests
+
+### BurntToast Testing Requirements
+
+When contributing changes that affect BurntToast integration:
+
+#### Auto-Installation Testing
+```bash
+# Test BurntToast detection and auto-installation
+npm run test:integration -- --grep "BurntToast"
+
+# Manual testing for auto-installation flow
+node bin/cctoast-wsl --dry-run  # Should detect BurntToast status
+```
+
+#### PowerShell Module Testing
+```bash
+# Test module availability detection
+powershell.exe -Command "Get-Module -ListAvailable -Name BurntToast"
+
+# Test auto-installation in clean environment
+# (Requires Windows environment or mocking)
+```
+
+#### Required Test Cases
+- [ ] BurntToast module detection (present/missing)
+- [ ] Auto-installation user consent flow
+- [ ] Installation failure handling
+- [ ] Module verification after installation
+- [ ] PowerShell execution policy compatibility
 
 ## Documentation Guidelines
 
@@ -424,7 +475,8 @@ export async function mergeSettings(
 ```
 
 #### User Documentation
-- Follow the [Documentation Style Guide](docs/DOCUMENTATION_STYLE_GUIDE.md)
+- Follow the [Documentation Style Guide](docs/ai_docx/DOCUMENTATION_STYLE_GUIDE.md)
+- For LLM-facing docs, use the [Writing Docs for AI](docs/ai_docx/WRITING_DOCS_FOR_AI.md) framework
 - Use **visual formatting** (alerts, tables, code blocks)
 - Include **working examples**
 - Test all code examples
@@ -625,6 +677,9 @@ Releases are automated using **release-please**:
 
 - **[Architecture Guide](docs/ai_docx/ARCHITECTURE.md)**: Technical design and decisions
 - **[Developer Workflow](docs/ai_docx/DEVELOPER_WORKFLOW.md)**: Detailed development procedures
+- **[Documentation Style Guide](docs/ai_docx/DOCUMENTATION_STYLE_GUIDE.md)**: Writing guidelines for human and LLM readers
+- **[Writing Docs for AI](docs/ai_docx/WRITING_DOCS_FOR_AI.md)**: Framework for creating LLM-facing documentation
+- **[CI/CD Workflows](docs/user-guides/CI-CD.md)**: Optimized workflows, path filtering, and control flags
 - **[FAQ](docs/user-guides/FAQ.md)**: Common questions and troubleshooting
 - **[Security Guide](docs/user-guides/SECURITY.md)**: Security considerations
 

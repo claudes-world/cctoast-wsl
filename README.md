@@ -10,6 +10,10 @@
 Transform your Claude Code workflow with native Windows notifications that appear when Claude is waiting for input or completes tasks - all from within WSL with no system-level changes required.
 
 ## Demo
+
+> [!NOTE]  
+> **Animated demos coming soon** - GIF recordings of toast notifications and CLI installation will be added in a future release
+
 <!-- GIF placeholder - TODO: Record toast notification demo -->
 <div align="center">
   <img src="./docs/assets/demo.gif" alt="Product Demo Recording" style="width: 90%; max-width: 600px;" >
@@ -39,7 +43,7 @@ Get Windows toast notifications working in under 2 minutes:
 3. **Done**: Toast notifications now work from WSL!
 
 > [!TIP]  
-> Installation completes in under 30 seconds and requires no admin privileges
+> Installation completes in under 30 seconds and requires no admin privileges. BurntToast PowerShell module is automatically installed if needed (user consent required).
 
 ### One-line installation
 ```bash
@@ -60,24 +64,25 @@ npx @claude/cctoast-wsl --global --quiet
 
 Complete list of available flags and options:
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--global/-g` | ✓ | Install to `~/.claude/…` |
-| `--local/-l` | | Install to `.claude/…` |
-| `--notification / --no-notification` | on | Include Notification hook |
-| `--stop / --no-stop` | on | Include Stop hook |
-| `--sync` | off | When local, modify tracked `settings.json` |
-| `--print-instructions/-p` | | Show usage & exit |
-| `--json` | off | Machine-readable summary |
-| `--dry-run/-n` | | Preview without writes |
-| `--force/-f` | | Bypass failed checks (except BurntToast) |
-| `--quiet/-q` | | Suppress prompts for CI |
-| `--uninstall` | | Remove install (scope prompts) |
-| `--version/-v` `--help/-h` | | Meta commands |
+| Flag                                 | Default | Description                                 |
+|------------------------------------- | ------- | ------------------------------------------- |
+| `--global/-g`                        | ✔       | Install to `~/.claude/…`.                   |
+| `--local/-l`                         |         | Install to `.claude/…`.                     |
+| `--notification / --no-notification` | on      | Include Notification hook.                  |
+| `--stop / --no-stop`                 | on      | Include Stop hook.                          |
+| `--sync`                             | off     | When local, modify tracked `settings.json`. |
+| `--print-instructions/-p`            |         | Show usage & exit.                          |
+| `--json`                             | off     | Machine‑readable summary.                   |
+| `--dry-run/-n`                       |         | Preview without writes.                     |
+| `--force/-f`                         |         | Bypass failed checks (except BurntToast).   |
+| `--quiet/-q`                         |         | Suppress prompts for CI.                    |
+| `--uninstall`                        |         | Remove install (scope prompts).             |
+| `--version/-v` `--help/-h`           |         | Meta.                                       |
 
 > [!NOTE]  
 > **Defaults**: Global installation + both hooks enabled + no sync  
 > **Exit codes**: `0` success · `1` abort · `2` dependency failure · `3` I/O error
+> **Interactive flow**: scope → hooks → sync → confirm
 
 ### Common usage examples
 
@@ -150,8 +155,11 @@ powershell.exe -Command "Set-ExecutionPolicy -Scope CurrentUser RemoteSigned"
 
 #### ❌ "BurntToast module not found"
 ```bash
-# Install BurntToast module for current user
+# The installer offers automatic installation, but if needed manually:
 powershell.exe -Command "Install-Module BurntToast -Scope CurrentUser -Force"
+
+# Verify installation
+powershell.exe -Command "Get-Module -ListAvailable -Name BurntToast"
 ```
 
 #### ❌ No notifications appearing
@@ -174,6 +182,8 @@ powershell.exe -Command "Install-Module BurntToast -Scope CurrentUser -Force"
 - **[Contributing Guide](CONTRIBUTING.md)** - Development environment and contribution guidelines
 - **[Architecture](docs/ai_docx/ARCHITECTURE.md)** - System design and technical decisions
 - **[Developer Workflow](docs/ai_docx/DEVELOPER_WORKFLOW.md)** - Setup, testing, and debugging
+- **[Documentation Style Guide](docs/ai_docx/DOCUMENTATION_STYLE_GUIDE.md)** - Writing guidelines for human and LLM readers
+- **[Writing Docs for AI](docs/ai_docx/WRITING_DOCS_FOR_AI.md)** - Framework for LLM-facing documentation
 
 ### Technical Specifications
 - **[Product Requirements](docs/ai_docx/PRD.md)** - Complete specifications and success metrics
@@ -181,16 +191,20 @@ powershell.exe -Command "Install-Module BurntToast -Scope CurrentUser -Force"
 - **[BurntToast Reference](docs/ref/BurntToast_manpage.txt)** - PowerShell module documentation
 
 #### CI/CD Pipeline
-cctoast-wsl uses a comprehensive automated testing and release pipeline:
+cctoast-wsl uses optimized GitHub Actions workflows that reduce CI minutes by 70-90%:
 
-- 🧪 **Automated Testing**: Vitest with 90% coverage requirement, shell script validation
-- 🏗️ **Multi-Platform CI**: Ubuntu Node 18/20 + Windows Node 20 with mocked BurntToast  
+- 🧪 **Smart Testing**: Path-based filtering, optimized matrix strategy, conditional execution
+- 🏗️ **Multi-Platform CI**: Ubuntu 18/20 + Windows 20 with enhanced caching  
 - 📦 **Automated Releases**: Conventional commits → Release Please → npm with provenance
 - 🔒 **Security**: SLSA-3 attestation, Dependabot updates, comprehensive security policies
 
-For local CI testing: `act -j test --dryrun` (requires [nektos/act](https://github.com/nektos/act))
+**Workflow Control**: Use `[skip-ci]` and `[skip-review]` flags to control automation
+**Local Testing**: `act -j test --dryrun` (requires [nektos/act](https://github.com/nektos/act))
 
-See [Developer Workflow - CI/CD Pipeline](docs/ai_docx/DEVELOPER_WORKFLOW.md#cicd-pipeline--testing) for complete details.
+> [!TIP]  
+> **CI/CD Optimization Guide**: See [CI/CD Workflows](docs/user-guides/CI-CD.md) for complete details on path filtering, matrix strategies, and workflow control flags.
+
+For development workflows, see [Developer Workflow Guide](docs/ai_docx/DEVELOPER_WORKFLOW.md#cicd-pipeline--testing).
 
 ---
 

@@ -1,0 +1,8 @@
+{
+    "session_id": "131a5446-d85c-48a3-86f3-4d5474251b59",
+    "transcript_path": "/home/liam/.claude/projects/-home-liam-code-cctoast-wsl/131a5446-d85c-48a3-86f3-4d5474251b59.jsonl",
+    "cwd": "/home/liam/code/cctoast-wsl",
+    "hook_event_name": "PreCompact",
+    "trigger": "auto",
+    "custom_instructions": null
+}{"session_id":"0ed89efb-94f1-4948-a54e-50a4d8153274","transcript_path":"/home/liam/.claude/projects/-home-liam-code-cctoast-wsl/0ed89efb-94f1-4948-a54e-50a4d8153274.jsonl","cwd":"/home/liam/code/cctoast-wsl/worktree-issue7","hook_event_name":"PreCompact","trigger":"auto","custom_instructions":null}{"session_id":"0ed89efb-94f1-4948-a54e-50a4d8153274","transcript_path":"/home/liam/.claude/projects/-home-liam-code-cctoast-wsl/0ed89efb-94f1-4948-a54e-50a4d8153274.jsonl","cwd":"/home/liam/code/cctoast-wsl/worktree-issue7","hook_event_name":"PreCompact","trigger":"auto","custom_instructions":null}{"session_id":"140954e6-d6c0-462f-936c-83657fe84cc3","transcript_path":"/home/liam/.claude/projects/-home-liam-code-cctoast-wsl/140954e6-d6c0-462f-936c-83657fe84cc3.jsonl","cwd":"/home/liam/code/cctoast-wsl/worktree-issue12","hook_event_name":"PreCompact","trigger":"auto","custom_instructions":null}

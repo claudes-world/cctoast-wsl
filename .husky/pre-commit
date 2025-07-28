@@ -1,1 +1,2 @@
-npx lint-staged
+npx git-format-staged -f 'prettier --ignore-unknown --stdin-filepath "{}"' '**/*'
+
