@@ -56,7 +56,8 @@ export class SettingsMerger {
 
     // Validate the parsed settings structure
     if (!this.validateSettings(result.data)) {
-      throw new Error('Invalid Claude settings structure: hooks must be objects with array values');
+      const context = 'hooks' in result.data && result.data.hooks ? 'hooks property' : 'root level';
+      throw new Error(`Invalid Claude settings structure at '${context}': hooks must be objects with array values`);
     }
 
     return result.data;
@@ -247,7 +248,17 @@ export class SettingsMerger {
       const keysA = Object.keys(a);
       const keysB = Object.keys(b);
       if (keysA.length !== keysB.length) return false;
-      return keysA.every(key => this.isEqual((a as any)[key], (b as any)[key]));
+      
+      // Performance optimization: for large objects, check key presence first
+      if (keysA.length > 50) {
+        const keySetB = new Set(keysB);
+        if (!keysA.every(key => keySetB.has(key))) return false;
+      }
+      
+      return keysA.every(key => this.isEqual(
+        (a as Record<string, unknown>)[key], 
+        (b as Record<string, unknown>)[key]
+      ));
     }
 
     return false;
