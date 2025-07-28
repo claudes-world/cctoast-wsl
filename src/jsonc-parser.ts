@@ -48,11 +48,22 @@ export class JsoncParser {
     this.column = 1;
     this.errors = [];
 
+    // Handle empty content
+    if (!content || content.trim().length === 0) {
+      return { data: {} as T, errors: [] };
+    }
+
     try {
       let processedContent = content;
       
       if (allowComments && stripComments) {
         processedContent = this.stripComments(content);
+      }
+
+      // Additional validation before parsing
+      const trimmed = processedContent.trim();
+      if (!trimmed) {
+        return { data: {} as T, errors: [] };
       }
 
       const data = JSON.parse(processedContent) as T;
@@ -61,10 +72,10 @@ export class JsoncParser {
       if (error instanceof SyntaxError) {
         this.addError(this.extractJsonError(error.message));
       } else {
-        this.addError('Unknown parsing error');
+        this.addError(`Unknown parsing error: ${(error as Error).message}`);
       }
       
-      // Try to recover with an empty object
+      // Try to recover with an empty object, but preserve the error
       return { data: {} as T, errors: this.errors };
     }
   }
