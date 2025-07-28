@@ -33,7 +33,7 @@ export interface MergeOptions {
 export interface MergeResult {
   merged: ClaudeSettings;
   changed: boolean;
-  backupPath?: string;
+  backupPath?: string | undefined;
 }
 
 /**
