@@ -354,7 +354,7 @@ export class SettingsMerger {
       } catch {
         // Ignore cleanup errors
       }
-      throw new Error(`Failed to write settings file: ${(error as Error).message}`);
+      throw new Error(`Failed to write settings file: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
