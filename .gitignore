@@ -157,3 +157,4 @@ dev-debug.log
 
 .taskmaster/
 .claude-tm/
+docs/ref/hook_*_example_input.txt
