@@ -223,9 +223,19 @@ validate_path() {
     if [[ "$path" =~ ^[A-Za-z]:[\\\/] ]] || [[ "$path" =~ ^\\\\[^\\]+\\[^\\]+ ]]; then
         # Additional validation for Windows paths
         # Check for invalid characters in Windows filenames
-        if [[ "$path" =~ [\<\>\:\"\|\?\*] ]]; then
+        # Note: Colons are allowed in drive specifications (C:) but not in filenames
+        if [[ "$path" =~ [\<\>\"\|\?\*] ]]; then
             if [[ "${CCTOAST_DEBUG:-}" == "1" ]]; then
                 echo "DEBUG: Windows path contains invalid characters: $path" >&2
+            fi
+            return 1
+        fi
+        
+        # Additional check for colons: only allowed as drive letter (e.g., C:)
+        # Check if path has colons in invalid positions (not part of drive spec)
+        if [[ "$path" =~ :[^\\\/]|[^A-Za-z]:|\:[^\\\/]*\: ]]; then
+            if [[ "${CCTOAST_DEBUG:-}" == "1" ]]; then
+                echo "DEBUG: Windows path contains colons in invalid positions: $path" >&2
             fi
             return 1
         fi
