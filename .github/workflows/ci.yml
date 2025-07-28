@@ -45,9 +45,6 @@ jobs:
           # Only test Windows on Node 20 per PRD requirements
           - os: windows-latest
             node-version: 18.x
-          # Skip Ubuntu 18 + Node 18 combination (redundant with Ubuntu latest)
-          - os: ubuntu-18.04
-            node-version: 18.x
             
     steps:
       - name: Checkout code
@@ -271,7 +268,8 @@ jobs:
           # Target: <100ms per architecture docs
           max_startup_time=100
           if [ $startup_time -gt $max_startup_time ]; then
-            echo "⚠️  CLI startup slower than target: ${startup_time}ms (target: <${max_startup_time}ms)"
-          else
-            echo "✅ CLI startup performance good: ${startup_time}ms"
+            echo "❌ CLI startup exceeds target: ${startup_time}ms (max: ${max_startup_time}ms)"
+            exit 1
           fi
+          
+          echo "✅ CLI startup performance good: ${startup_time}ms"
