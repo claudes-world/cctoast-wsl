@@ -64,28 +64,6 @@
         ]
       }
     ],
-    "PreToolUse": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "tee -a $CLAUDE_PROJECT_DIR/docs/ref/hook_pretooluse_example_input.txt >/dev/null"
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "tee -a $CLAUDE_PROJECT_DIR/docs/ref/hook_posttooluse_example_input.txt >/dev/null"
-          }
-        ]
-      }
-    ],
     "UserPromptSubmit": [
       {
         "matcher": "",
