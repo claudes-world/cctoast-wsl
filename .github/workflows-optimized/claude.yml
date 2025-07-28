@@ -57,7 +57,7 @@ jobs:
           # assignee_trigger: "claude-bot"
           
           # OPTIMIZATION: Restrict allowed tools for security and performance
-          allowed_tools: "Bash(npm install),Bash(npm run build:*),Bash(npm run test:*),Bash(npm run lint:*),Bash(git *)"
+          allowed_tools: "Bash(npm install),Bash(npm run build:*),Bash(npm run test:*),Bash(npm run lint:*),Bash(git apply),Bash(git commit),Bash(git diff)"
           
           # Optional: Add custom instructions for Claude to customize its behavior for your project
           custom_instructions: |
