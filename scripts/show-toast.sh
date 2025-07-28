@@ -397,14 +397,39 @@ execute_notification() {
     return 0
 }
 
-# Parse hook payload from stdin (future-proofing)
+# Parse hook payload from stdin and extract relevant fields
 parse_hook_payload() {
-    local payload
+    local payload message
     # Read from stdin with timeout to avoid hanging
     if payload=$(timeout 0.1s cat 2>/dev/null); then
-        # For now, just log that we received payload (future enhancement)
-        log_error "Received hook payload: ${payload:0:100}..." 2>/dev/null || true
+        if [[ "${CCTOAST_DEBUG:-}" == "1" ]]; then
+            echo "DEBUG: Received hook payload: ${payload:0:200}..." >&2
+        fi
+        
+        # Try to extract message from JSON payload using basic string manipulation
+        # This avoids dependency on jq which may not be installed
+        if [[ "$payload" =~ \"message\"[[:space:]]*:[[:space:]]*\"([^\"]*) ]]; then
+            message="${BASH_REMATCH[1]}"
+            if [[ "${CCTOAST_DEBUG:-}" == "1" ]]; then
+                echo "DEBUG: Extracted message from hook payload: $message" >&2
+            fi
+            # Return the extracted message
+            echo "$message"
+            return 0
+        else
+            if [[ "${CCTOAST_DEBUG:-}" == "1" ]]; then
+                echo "DEBUG: No message field found in hook payload" >&2
+            fi
+        fi
+    else
+        if [[ "${CCTOAST_DEBUG:-}" == "1" ]]; then
+            echo "DEBUG: No hook payload received from stdin" >&2
+        fi
     fi
+    
+    # Return empty string if no message found
+    echo ""
+    return 1
 }
 
 # Main argument parsing and execution
@@ -485,9 +510,20 @@ EOF
         esac
     done
     
-    # Parse hook payload if in hook mode (future-proofing)
+    # Parse hook payload if in hook mode and use extracted message
     if [[ -n "$hook_mode" ]]; then
-        parse_hook_payload
+        local hook_message
+        if hook_message=$(parse_hook_payload) && [[ -n "$hook_message" ]]; then
+            # Use the message from the hook payload, but keep the default title
+            message="$hook_message"
+            if [[ "${CCTOAST_DEBUG:-}" == "1" ]]; then
+                echo "DEBUG: Using message from hook payload: $message" >&2
+            fi
+        else
+            if [[ "${CCTOAST_DEBUG:-}" == "1" ]]; then
+                echo "DEBUG: No valid message in hook payload, using defaults" >&2
+            fi
+        fi
     fi
     
     # Set defaults if not specified

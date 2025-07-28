@@ -90,17 +90,26 @@ CCTOAST_DEBUG=1 ./scripts/show-toast.sh --title "Windows Path" --message "Testin
 ### ✅ Test 6: Hook Mode Testing
 **Command:**
 ```bash
-# Test notification hook mode
-echo '{"message": "Test notification"}' | ./scripts/show-toast.sh --notification-hook
+# Test notification hook mode with JSON message
+echo '{"message": "Test notification from JSON"}' | ./scripts/show-toast.sh --notification-hook
 
-# Test stop hook mode  
-echo '{"message": "Test completion"}' | ./scripts/show-toast.sh --stop-hook
+# Test stop hook mode with JSON message
+echo '{"message": "Test completion from JSON"}' | ./scripts/show-toast.sh --stop-hook
+
+# Test notification hook mode without JSON (should use defaults)
+echo '' | ./scripts/show-toast.sh --notification-hook
+
+# Test stop hook mode without JSON (should use defaults)  
+echo '' | ./scripts/show-toast.sh --stop-hook
 ```
 **Expected Behavior:**
-- Both commands should show toast notifications
-- Notification hook: "Claude Code" / "Waiting for your response"
-- Stop hook: "Claude Code" / "Task completed"
-- Should execute quickly without hanging
+- First two commands should show toast notifications with custom messages from JSON
+- Notification hook with JSON: "Claude Code" / "Test notification from JSON"
+- Stop hook with JSON: "Claude Code" / "Test completion from JSON"
+- Last two commands should show toast notifications with default messages
+- Notification hook without JSON: "Claude Code" / "Waiting for your response"
+- Stop hook without JSON: "Claude Code" / "Task completed"
+- All should execute quickly without hanging
 
 **Report:** ✅/❌ Do both hook modes work correctly?
 
