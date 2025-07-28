@@ -33,6 +33,14 @@ Always ensure implementations align with these specifications and follow the est
   - Helps track individual contributions
   - Demonstrates professional communication
 
+### Required Signature Format
+All git commits, GitHub issue comments, and PR comments must include:
+```
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude-do <claude@claude.do>, Claude <noreply@anthropic.com>
+```
+
 ## 🧪 Interactive Feature Testing Protocol
 
 **CRITICAL**: Before closing any milestone that includes interactive/TTY features, ALWAYS request user validation in a real terminal environment. The Claude Code environment cannot fully test interactive prompts, TTY detection, or terminal-specific behaviors.

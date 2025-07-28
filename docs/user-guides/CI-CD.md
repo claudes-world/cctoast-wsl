@@ -59,7 +59,7 @@ Different testing strategies for different scenarios:
 graph TB
     A[Code Change] --> B{Event Type}
     B -->|Pull Request| C[2 Jobs: Ubuntu 20 + Windows 20]
-    B -->|Push to Main| D[3 Jobs: Ubuntu 18/20 + Windows 20]
+    B -->|Push to Main| D[3 Jobs: Ubuntu 18 + Ubuntu 20 + Windows 20]
     C --> E[Fast Feedback ~5 min]
     D --> F[Full Validation ~8 min]
 ```
@@ -245,7 +245,7 @@ touch src/cli.ts && git add . && git commit --amend --no-edit
 
 ```bash
 # Check which files would trigger CI
-git diff --name-only origin/main | grep -E "(src/|scripts/|package.*\.json|tsconfig\.json|__tests__/)"
+git diff --name-only origin/main | grep -E "(src/|scripts/|package.*\.json|tsconfig\.json|__tests__/|\.github/workflows/ci\.yml)"
 
 # Test path filtering locally
 act -j test --dryrun  # Requires nektos/act
@@ -297,9 +297,7 @@ To modify the test matrix:
 
 ```yaml
 # Different matrix for different events
-os: ${{ github.event_name == 'pull_request' && 
-        fromJSON('["ubuntu-latest", "windows-latest"]') || 
-        fromJSON('["ubuntu-18.04", "ubuntu-latest", "windows-latest"]') }}
+os: ${{ github.event_name == 'pull_request' && fromJSON('["ubuntu-latest", "windows-latest"]') || fromJSON('["ubuntu-18.04", "ubuntu-latest", "windows-latest"]') }}
 ```
 
 ### Cache Configuration
