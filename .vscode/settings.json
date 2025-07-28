@@ -22,5 +22,8 @@
     "peacock.remoteColor": "#942f3d",
     "[markdown]": {
         "editor.wordWrap": "off"
-    }
+    },
+    "cSpell.words": [
+        "findability"
+    ]
 }
