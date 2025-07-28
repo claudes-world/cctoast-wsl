@@ -72,7 +72,7 @@ export class JsoncParser {
       if (error instanceof SyntaxError) {
         this.addError(this.extractJsonError(error.message));
       } else {
-        this.addError(`Unknown parsing error: ${(error as Error).message}`);
+        this.addError(`Unknown parsing error: ${error instanceof Error ? error.message : String(error)}`);
       }
       
       // Try to recover with an empty object, but preserve the error
