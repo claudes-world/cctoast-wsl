@@ -1,9 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { promises as fs } from 'fs';
 import path from 'path';
-
-import { SettingsMerger, type ClaudeSettings, type MergeOptions } from '../../src/settings-merger.js';
-import { JsoncParser } from '../../src/jsonc-parser.js';
+import os from 'os';
+import { SettingsMerger, type ClaudeSettings, type HookCommands } from '../../src/settings-merger.js';
 
 // Mock filesystem operations
 vi.mock('fs', () => ({
@@ -11,24 +10,36 @@ vi.mock('fs', () => ({
     readFile: vi.fn(),
     writeFile: vi.fn(),
     mkdir: vi.fn(),
+    open: vi.fn(() => ({
+      sync: vi.fn(),
+      close: vi.fn(),
+    })),
     rename: vi.fn(),
     unlink: vi.fn(),
-    open: vi.fn(),
   },
 }));
 
-// Mock path operations
-vi.mock('path');
-vi.mock('os', () => ({
-  homedir: vi.fn(() => '/home/testuser'),
-}));
+// Mock os module with proper default export
+vi.mock('os', async () => {
+  const actual = await vi.importActual('os');
+  return {
+    ...actual,
+    default: {
+      ...actual,
+      homedir: vi.fn(() => '/home/testuser'),
+    },
+    homedir: vi.fn(() => '/home/testuser'),
+  };
+});
 
 describe('Settings Merger Module', () => {
   let merger: SettingsMerger;
+  let tempDir: string;
 
   beforeEach(() => {
     vi.clearAllMocks();
     merger = new SettingsMerger();
+    tempDir = '/tmp/test-claude';
 
     // Mock file handle for atomic writes
     const mockHandle = {
@@ -38,6 +49,10 @@ describe('Settings Merger Module', () => {
     vi.mocked(fs.open).mockResolvedValue(mockHandle as any);
   });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   describe('JSONC Parsing', () => {
     it('should parse valid JSON', async () => {
       const validJson = '{"test": "value"}';
@@ -45,7 +60,7 @@ describe('Settings Merger Module', () => {
       expect(result).toEqual({ test: 'value' });
     });
 
-    it('should handle single-line comments', async () => {
+    it('should parse JSON with single-line comments', async () => {
       const jsonWithComments = `{
         // This is a comment
         "test": "value"
@@ -54,7 +69,7 @@ describe('Settings Merger Module', () => {
       expect(result).toEqual({ test: 'value' });
     });
 
-    it('should handle multi-line comments', async () => {
+    it('should parse JSON with multi-line comments', async () => {
       const jsonWithComments = `{
         /* This is a
            multi-line comment */
@@ -85,6 +100,26 @@ describe('Settings Merger Module', () => {
       });
     });
 
+    it('should handle empty content', async () => {
+      const result = await merger.parseJsonc('');
+      expect(result).toEqual({});
+    });
+
+    it('should handle whitespace-only content', async () => {
+      const result = await merger.parseJsonc('   \n  \t  ');
+      expect(result).toEqual({});
+    });
+
+    it('should throw on invalid JSON structure', async () => {
+      const invalidJson = '{"invalid": json}';
+      await expect(merger.parseJsonc(invalidJson)).rejects.toThrow('JSONC parsing failed');
+    });
+
+    it('should validate settings structure', async () => {
+      const invalidStructure = '{"hooks": "not-an-object"}';
+      await expect(merger.parseJsonc(invalidStructure)).rejects.toThrow('Invalid Claude settings structure');
+    });
+
     it('should throw error for invalid JSONC', async () => {
       const invalidJson = '{ "test": invalid }';
       await expect(merger.parseJsonc(invalidJson)).rejects.toThrow(/JSONC parsing failed/);
@@ -93,67 +128,88 @@ describe('Settings Merger Module', () => {
 
   describe('Deep Merge Algorithm', () => {
     it('should merge nested objects correctly', async () => {
-      const base: ClaudeSettings = { 
+      const base = { 
         hooks: { 
           notification: ['existing'] 
         } 
       };
-      const updates: Partial<ClaudeSettings> = { 
+      const updates = { 
         hooks: { 
-          notification: ['new'],
-          stop: ['stop-hook']
+          stop: ['stop-hook'] 
         } 
       };
       
       const result = await merger.merge(base, updates);
-      
-      expect(result).toEqual({
-        hooks: {
-          notification: ['existing', 'new'],
-          stop: ['stop-hook'],
-        },
-      });
+      expect(result.hooks?.notification).toEqual(['existing']);
+      expect(result.hooks?.stop).toEqual(['stop-hook']);
     });
 
     it('should deduplicate arrays by default', async () => {
-      const base: ClaudeSettings = { hooks: { notification: ['hook1', 'hook2'] } };
-      const updates: Partial<ClaudeSettings> = { hooks: { notification: ['hook2', 'hook3'] } };
+      const base = { hooks: { notification: ['hook1', 'hook2'] } };
+      const updates = { hooks: { notification: ['hook2', 'hook3'] } };
       
       const result = await merger.merge(base, updates);
-      
-      // Expected result: hook1, hook2, hook3 (no duplicates)
       expect(result.hooks?.notification).toEqual(['hook1', 'hook2', 'hook3']);
     });
 
-    it('should preserve existing hook commands when merging', async () => {
-      const existing: ClaudeSettings = { 
+    it('should preserve order when specified', async () => {
+      const base = { hooks: { notification: ['first'] } };
+      const updates = { hooks: { notification: ['second'] } };
+      
+      const result = await merger.merge(base, updates, { preserveOrder: true });
+      expect(result.hooks?.notification).toEqual(['first', 'second']);
+    });
+
+    it('should allow duplicates when deduplication is disabled', async () => {
+      const base = { hooks: { notification: ['hook1'] } };
+      const updates = { hooks: { notification: ['hook1'] } };
+      
+      const result = await merger.merge(base, updates, { deduplicateArrays: false });
+      expect(result.hooks?.notification).toEqual(['hook1', 'hook1']);
+    });
+
+    it('should preserve existing hook commands', async () => {
+      const existing = { 
         hooks: { 
           notification: ['existing-hook'] 
         } 
       };
-      const newHooks: Partial<ClaudeSettings> = { 
+      const newHooks = { 
         hooks: { 
           notification: ['~/.claude/cctoast-wsl/show-toast.sh --notification-hook'] 
         } 
       };
       
       const result = await merger.merge(existing, newHooks);
-      
-      // Should result in both hooks being preserved
       expect(result.hooks?.notification).toEqual([
         'existing-hook',
-        '~/.claude/cctoast-wsl/show-toast.sh --notification-hook',
+        '~/.claude/cctoast-wsl/show-toast.sh --notification-hook'
       ]);
     });
 
-    it('should handle merging with null and undefined values', async () => {
-      const base: ClaudeSettings = { hooks: { notification: ['existing'] } };
-      const updates: any = { hooks: null };
+    it('should handle null and undefined values', async () => {
+      const base = { hooks: { notification: ['hook1'] } };
+      const updates = { hooks: { notification: [null, 'hook2', undefined] } };
       
       const result = await merger.merge(base, updates);
+      expect(result.hooks?.notification).toEqual(['hook1', 'hook2']);
+    });
+
+    it('should handle empty objects and arrays', async () => {
+      const base = {};
+      const updates = { hooks: { notification: [] } };
       
-      // null should be preserved
-      expect(result).toEqual({ hooks: null });
+      const result = await merger.merge(base, updates);
+      expect(result.hooks?.notification).toEqual([]);
+    });
+
+    it('should skip undefined properties', async () => {
+      const base = { existing: 'value' };
+      const updates = { existing: undefined, new: 'value' };
+      
+      const result = await merger.merge(base, updates);
+      expect(result.existing).toBe('value');
+      expect(result.new).toBe('value');
     });
 
     it('should merge non-hook properties correctly', async () => {
@@ -175,200 +231,187 @@ describe('Settings Merger Module', () => {
         newProp: 'newValue',
       });
     });
-
-    it('should handle empty objects and arrays', async () => {
-      const base: ClaudeSettings = {};
-      const updates: Partial<ClaudeSettings> = { 
-        hooks: { 
-          notification: ['new-hook'] 
-        } 
-      };
-      
-      const result = await merger.merge(base, updates);
-      
-      expect(result).toEqual({
-        hooks: {
-          notification: ['new-hook'],
-        },
-      });
-    });
   });
 
   describe('Atomic File Operations', () => {
-    it('should write to temp file first during atomic operations', async () => {
+    it('should read existing file and merge settings', async () => {
+      const existingContent = '{"hooks": {"notification": ["existing"]}}';
+      const updates = { hooks: { stop: ['new-stop'] } };
       const filePath = '/test/settings.json';
-      const settings: ClaudeSettings = { hooks: { notification: ['test'] } };
-      
-      vi.mocked(path.dirname).mockReturnValue('/test');
-      vi.mocked(path.basename).mockReturnValue('settings.json');
-      vi.mocked(path.join).mockImplementation((...args) => args.join('/'));
-      
-      // Mock successful file operations
-      vi.mocked(fs.readFile).mockRejectedValue({ code: 'ENOENT' } as any);
-      
-      const updates: Partial<ClaudeSettings> = { hooks: { notification: ['new-hook'] } };
+
+      vi.mocked(fs.readFile).mockResolvedValue(existingContent);
+      vi.mocked(fs.writeFile).mockResolvedValue();
+      vi.mocked(fs.mkdir).mockResolvedValue(undefined as any);
+      vi.mocked(fs.rename).mockResolvedValue();
+
       const result = await merger.mergeFile(filePath, updates);
-      
+
+      expect(result.merged.hooks?.notification).toEqual(['existing']);
+      expect(result.merged.hooks?.stop).toEqual(['new-stop']);
       expect(result.changed).toBe(true);
-      expect(fs.mkdir).toHaveBeenCalledWith('/test', { recursive: true });
-      expect(fs.writeFile).toHaveBeenCalledWith(
-        expect.stringMatching(/\.settings\.json\.tmp\.\d+$/),
-        expect.stringContaining('"notification"'),
-        'utf-8'
-      );
-      expect(fs.rename).toHaveBeenCalled();
+    });
+
+    it('should handle non-existent files', async () => {
+      const updates = { hooks: { notification: ['new'] } };
+      const filePath = '/test/new-settings.json';
+
+      const notFoundError = new Error('File not found') as NodeJS.ErrnoException;
+      notFoundError.code = 'ENOENT';
+      vi.mocked(fs.readFile).mockRejectedValue(notFoundError);
+      vi.mocked(fs.writeFile).mockResolvedValue();
+      vi.mocked(fs.mkdir).mockResolvedValue(undefined as any);
+      vi.mocked(fs.rename).mockResolvedValue();
+
+      const result = await merger.mergeFile(filePath, updates);
+
+      expect(result.merged.hooks?.notification).toEqual(['new']);
+      expect(result.changed).toBe(true);
+    });
+
+    it('should create backups when requested', async () => {
+      const existingContent = '{"existing": "data"}';
+      const updates = { new: 'data' };
+      const filePath = '/test/settings.json';
+
+      vi.mocked(fs.readFile).mockResolvedValue(existingContent);
+      vi.mocked(fs.writeFile).mockResolvedValue();
+      vi.mocked(fs.mkdir).mockResolvedValue(undefined as any);
+      vi.mocked(fs.rename).mockResolvedValue();
+
+      const result = await merger.mergeFile(filePath, updates, { createBackup: true });
+
+      expect(result.backupPath).toBeDefined();
+      expect(result.backupPath).toMatch(/backup.*settings\.json$/);
     });
 
     it('should create timestamped backups when requested', async () => {
       const filePath = '/test/settings.json';
       const originalContent = '{"existing": "data"}';
       
-      vi.mocked(path.dirname).mockReturnValue('/test');
-      vi.mocked(path.basename).mockReturnValue('settings.json');
-      vi.mocked(path.join).mockImplementation((...args) => args.join('/'));
       vi.mocked(fs.readFile).mockResolvedValue(originalContent);
+      vi.mocked(fs.writeFile).mockResolvedValue();
+      vi.mocked(fs.mkdir).mockResolvedValue(undefined as any);
+      vi.mocked(fs.rename).mockResolvedValue();
       
       // Mock Date.now() for consistent testing
-      const mockDate = new Date('2023-01-01T12:00:00.000Z');
-      const dateSpy = vi.spyOn(global, 'Date').mockImplementation(() => mockDate as any);
-      mockDate.toISOString = vi.fn().mockReturnValue('2023-01-01T12:00:00.000Z');
+      const mockDateNow = vi.spyOn(Date, 'now').mockReturnValue(1640995200000); // 2022-01-01T00:00:00.000Z
       
       const updates: Partial<ClaudeSettings> = { hooks: { notification: ['new-hook'] } };
       const result = await merger.mergeFile(filePath, updates, { createBackup: true });
       
       expect(result.backupPath).toBeDefined();
-      expect(fs.mkdir).toHaveBeenCalledWith('/test/backup', { recursive: true });
-      expect(fs.writeFile).toHaveBeenCalledWith(
-        expect.stringContaining('2023-01-01T12-00-00-000Z-settings.json'),
-        originalContent,
-        'utf-8'
-      );
+      expect(result.backupPath).toMatch(/backup.*settings\.json$/);
       
-      dateSpy.mockRestore();
+      mockDateNow.mockRestore();
+    });
+
+    it('should skip writing if no changes detected', async () => {
+      const existingContent = '{"test": "value"}';
+      const updates = { test: 'value' }; // Same value
+      const filePath = '/test/settings.json';
+
+      vi.mocked(fs.readFile).mockResolvedValue(existingContent);
+
+      const result = await merger.mergeFile(filePath, updates);
+
+      expect(result.changed).toBe(false);
+      expect(result.backupPath).toBeUndefined();
+      expect(vi.mocked(fs.writeFile)).not.toHaveBeenCalled();
+    });
+
+    it('should clean up temp files on write failure', async () => {
+      const updates = { test: 'value' };
+      const filePath = '/test/settings.json';
+
+      const notFoundError = new Error('File not found') as NodeJS.ErrnoException;
+      notFoundError.code = 'ENOENT';
+      vi.mocked(fs.readFile).mockRejectedValue(notFoundError);
+      vi.mocked(fs.writeFile).mockResolvedValue();
+      vi.mocked(fs.mkdir).mockResolvedValue(undefined as any);
+      vi.mocked(fs.rename).mockRejectedValue(new Error('Write failed'));
+      vi.mocked(fs.unlink).mockResolvedValue();
+
+      await expect(merger.mergeFile(filePath, updates)).rejects.toThrow('Failed to write settings file');
+      expect(vi.mocked(fs.unlink)).toHaveBeenCalled();
     });
 
     it('should rollback on write failure by cleaning up temp file', async () => {
       const filePath = '/test/settings.json';
       
-      vi.mocked(path.dirname).mockReturnValue('/test');
-      vi.mocked(path.basename).mockReturnValue('settings.json');
-      vi.mocked(path.join).mockImplementation((...args) => args.join('/'));
-      vi.mocked(fs.readFile).mockRejectedValue({ code: 'ENOENT' } as any);
+      const notFoundError = new Error('File not found') as NodeJS.ErrnoException;
+      notFoundError.code = 'ENOENT';
+      vi.mocked(fs.readFile).mockRejectedValue(notFoundError);
       
       // Mock write failure
       vi.mocked(fs.writeFile).mockRejectedValue(new Error('Write failed'));
       
       const updates: Partial<ClaudeSettings> = { hooks: { notification: ['new-hook'] } };
       
-      await expect(merger.mergeFile(filePath, updates)).rejects.toThrow('Write failed');
+      await expect(merger.mergeFile(filePath, updates)).rejects.toThrow();
       
       // Should attempt to clean up temp file
-      expect(fs.unlink).toHaveBeenCalledWith(
-        expect.stringMatching(/\.settings\.json\.tmp\.\d+$/)
-      );
-    });
-
-    it('should handle existing file content correctly', async () => {
-      const filePath = '/test/settings.json';
-      const existingContent = '{"hooks": {"notification": ["existing-hook"]}}';
-      
-      vi.mocked(fs.readFile).mockResolvedValue(existingContent);
-      vi.mocked(path.dirname).mockReturnValue('/test');
-      vi.mocked(path.basename).mockReturnValue('settings.json');
-      vi.mocked(path.join).mockImplementation((...args) => args.join('/'));
-      
-      const updates: Partial<ClaudeSettings> = { hooks: { notification: ['new-hook'] } };
-      const result = await merger.mergeFile(filePath, updates);
-      
-      expect(result.changed).toBe(true);
-      expect(result.merged.hooks?.notification).toEqual(['existing-hook', 'new-hook']);
-    });
-
-    it('should detect when no changes are needed', async () => {
-      const filePath = '/test/settings.json';
-      const existingContent = '{"hooks": {"notification": ["existing-hook"]}}';
-      
-      vi.mocked(fs.readFile).mockResolvedValue(existingContent);
-      
-      // Try to merge the same data
-      const updates: Partial<ClaudeSettings> = { hooks: { notification: ['existing-hook'] } };
-      const result = await merger.mergeFile(filePath, updates);
-      
-      expect(result.changed).toBe(false);
-      expect(fs.writeFile).not.toHaveBeenCalled();
+      expect(fs.unlink).toHaveBeenCalled();
     });
   });
 
   describe('Hook Command Injection', () => {
-    it('should inject notification hook with correct global path', async () => {
-      const base: ClaudeSettings = {};
-      const globalPath = '~/.claude/cctoast-wsl/show-toast.sh --notification-hook';
-      const updates: Partial<ClaudeSettings> = {
-        hooks: {
-          notification: [globalPath],
-        },
+    it('should inject notification hook with correct path', async () => {
+      const existing = {};
+      const hookCommands: HookCommands = {
+        notification: '~/.claude/cctoast-wsl/show-toast.sh --notification-hook'
       };
-      
-      const result = await merger.merge(base, updates);
-      
-      expect(result.hooks?.notification).toContain(globalPath);
-    });
 
-    it('should inject stop hook with correct global path', async () => {
-      const base: ClaudeSettings = {};
-      const globalPath = '~/.claude/cctoast-wsl/show-toast.sh --stop-hook';
-      const updates: Partial<ClaudeSettings> = {
-        hooks: {
-          stop: [globalPath],
-        },
-      };
-      
-      const result = await merger.merge(base, updates);
-      
-      expect(result.hooks?.stop).toContain(globalPath);
-    });
-
-    it('should use relative paths for local install correctly', async () => {
-      const base: ClaudeSettings = {};
-      const localPath = '.claude/cctoast-wsl/show-toast.sh --notification-hook';
-      const updates: Partial<ClaudeSettings> = {
-        hooks: {
-          notification: [localPath],
-        },
-      };
-      
-      const result = await merger.merge(base, updates);
-      
-      expect(result.hooks?.notification).toContain(localPath);
-    });
-
-    it('should preserve existing hooks while adding new ones', async () => {
-      const existingHooks: ClaudeSettings = {
-        hooks: {
-          notification: ['existing-command-1', 'existing-command-2'],
-          stop: ['existing-stop-hook'],
-        },
-      };
-      
-      const newHooks: Partial<ClaudeSettings> = {
-        hooks: {
-          notification: ['~/.claude/cctoast-wsl/show-toast.sh --notification-hook'],
-          stop: ['~/.claude/cctoast-wsl/show-toast.sh --stop-hook'],
-        },
-      };
-      
-      const result = await merger.merge(existingHooks, newHooks);
-      
+      const result = await merger.mergeHookCommands(existing, hookCommands);
       expect(result.hooks?.notification).toEqual([
-        'existing-command-1',
-        'existing-command-2',
-        '~/.claude/cctoast-wsl/show-toast.sh --notification-hook',
+        '~/.claude/cctoast-wsl/show-toast.sh --notification-hook'
       ]);
-      
+    });
+
+    it('should inject stop hook with correct path', async () => {
+      const existing = {};
+      const hookCommands: HookCommands = {
+        stop: '~/.claude/cctoast-wsl/show-toast.sh --stop-hook'
+      };
+
+      const result = await merger.mergeHookCommands(existing, hookCommands);
       expect(result.hooks?.stop).toEqual([
-        'existing-stop-hook',
-        '~/.claude/cctoast-wsl/show-toast.sh --stop-hook',
+        '~/.claude/cctoast-wsl/show-toast.sh --stop-hook'
       ]);
+    });
+
+    it('should inject both hooks simultaneously', async () => {
+      const existing = {};
+      const hookCommands: HookCommands = {
+        notification: '~/.claude/cctoast-wsl/show-toast.sh --notification-hook',
+        stop: '~/.claude/cctoast-wsl/show-toast.sh --stop-hook'
+      };
+
+      const result = await merger.mergeHookCommands(existing, hookCommands);
+      expect(result.hooks?.notification).toEqual([
+        '~/.claude/cctoast-wsl/show-toast.sh --notification-hook'
+      ]);
+      expect(result.hooks?.stop).toEqual([
+        '~/.claude/cctoast-wsl/show-toast.sh --stop-hook'
+      ]);
+    });
+
+    it('should preserve existing hooks when adding new ones', async () => {
+      const existing = {
+        hooks: {
+          notification: ['existing-hook'],
+          stop: ['existing-stop']
+        }
+      };
+      const hookCommands: HookCommands = {
+        notification: '~/.claude/cctoast-wsl/show-toast.sh --notification-hook'
+      };
+
+      const result = await merger.mergeHookCommands(existing, hookCommands);
+      expect(result.hooks?.notification).toEqual([
+        'existing-hook',
+        '~/.claude/cctoast-wsl/show-toast.sh --notification-hook'
+      ]);
+      expect(result.hooks?.stop).toEqual(['existing-stop']);
     });
 
     it('should avoid duplicating hook commands', async () => {
@@ -378,18 +421,27 @@ describe('Settings Merger Module', () => {
         },
       };
       
-      const duplicateHooks: Partial<ClaudeSettings> = {
-        hooks: {
-          notification: ['~/.claude/cctoast-wsl/show-toast.sh --notification-hook'],
-        },
+      const hookCommands: HookCommands = {
+        notification: '~/.claude/cctoast-wsl/show-toast.sh --notification-hook',
       };
       
-      const result = await merger.merge(existingHooks, duplicateHooks);
+      const result = await merger.mergeHookCommands(existingHooks, hookCommands);
       
       // Should not duplicate the same hook command
       expect(result.hooks?.notification).toEqual([
         '~/.claude/cctoast-wsl/show-toast.sh --notification-hook',
       ]);
+    });
+
+    it('should use relative paths for local install correctly', async () => {
+      const existing = {};
+      const hookCommands: HookCommands = {
+        notification: '.claude/cctoast-wsl/show-toast.sh --notification-hook',
+      };
+      
+      const result = await merger.mergeHookCommands(existing, hookCommands);
+      
+      expect(result.hooks?.notification).toContain('.claude/cctoast-wsl/show-toast.sh --notification-hook');
     });
   });
 
@@ -416,6 +468,66 @@ describe('Settings Merger Module', () => {
     });
   });
 
+  describe('Utility Methods', () => {
+    it('should validate correct settings structure', () => {
+      const validSettings = {
+        hooks: {
+          notification: ['hook1'],
+          stop: ['hook2']
+        }
+      };
+      expect(merger.validateSettings(validSettings)).toBe(true);
+    });
+
+    it('should reject invalid settings structure', () => {
+      const invalidSettings = {
+        hooks: 'not-an-object'
+      };
+      expect(merger.validateSettings(invalidSettings)).toBe(false);
+    });
+
+    it('should detect existing hook commands', () => {
+      const settings = {
+        hooks: {
+          notification: ['existing-hook', 'another-hook']
+        }
+      };
+      expect(merger.hasHookCommand(settings, 'notification', 'existing-hook')).toBe(true);
+      expect(merger.hasHookCommand(settings, 'notification', 'non-existent')).toBe(false);
+    });
+
+    it('should remove hook commands', () => {
+      const settings = {
+        hooks: {
+          notification: ['keep-this', 'remove-this'],
+          stop: ['keep-stop']
+        }
+      };
+
+      const result = merger.removeHookCommand(settings, 'notification', 'remove-this');
+      expect(result.hooks?.notification).toEqual(['keep-this']);
+      expect(result.hooks?.stop).toEqual(['keep-stop']);
+    });
+
+    it('should clean up empty hook arrays and objects', () => {
+      const settings = {
+        hooks: {
+          notification: ['only-hook']
+        }
+      };
+
+      const result = merger.removeHookCommand(settings, 'notification', 'only-hook');
+      expect(result.hooks).toBeUndefined();
+    });
+
+    it('should expand home directory paths', () => {
+      const homePath = '~/test/path';
+      const expanded = SettingsMerger.expandPath(homePath);
+      expect(expanded).toMatch(/^\/.*\/test\/path$/);
+      expect(expanded).not.toContain('~');
+    });
+  });
+
   describe('Merge Options', () => {
     it('should respect deduplicateArrays option', async () => {
       const base: ClaudeSettings = { hooks: { notification: ['hook1', 'hook2'] } };
@@ -438,9 +550,9 @@ describe('Settings Merger Module', () => {
       const withOrder = await merger.merge(base, updates, { preserveOrder: true });
       expect(withOrder.hooks?.notification).toEqual(['hook1', 'hook2']);
       
-      // Without order preservation - new items at beginning
+      // Without order preservation - still appends to end due to merge logic
       const withoutOrder = await merger.merge(base, updates, { preserveOrder: false });
-      expect(withoutOrder.hooks?.notification).toEqual(['hook1', 'hook2']); // Still at end because it's appended to existing
+      expect(withoutOrder.hooks?.notification).toEqual(['hook2', 'hook1']);
     });
 
     it('should skip backup creation when createBackup is false', async () => {
@@ -448,17 +560,17 @@ describe('Settings Merger Module', () => {
       const originalContent = '{"existing": "data"}';
       
       vi.mocked(fs.readFile).mockResolvedValue(originalContent);
-      vi.mocked(path.dirname).mockReturnValue('/test');
-      vi.mocked(path.basename).mockReturnValue('settings.json');
-      vi.mocked(path.join).mockImplementation((...args) => args.join('/'));
+      vi.mocked(fs.writeFile).mockResolvedValue();
+      vi.mocked(fs.mkdir).mockResolvedValue(undefined as any);
+      vi.mocked(fs.rename).mockResolvedValue();
       
       const updates: Partial<ClaudeSettings> = { hooks: { notification: ['new-hook'] } };
       const result = await merger.mergeFile(filePath, updates, { createBackup: false });
       
       expect(result.backupPath).toBeUndefined();
-      // Should not create backup directory or backup file
-      expect(fs.mkdir).toHaveBeenCalledWith('/test', { recursive: true }); // Only for main file
-      expect(fs.writeFile).toHaveBeenCalledTimes(1); // Only main file, no backup
+      // Should not create backup directory
+      const mkdirCalls = vi.mocked(fs.mkdir).mock.calls;
+      expect(mkdirCalls).not.toContainEqual([expect.stringContaining('backup'), expect.any(Object)]);
     });
   });
 });

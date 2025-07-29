@@ -1,0 +1,1 @@
+{"session_id":"9b19783a-56ac-4d8f-b111-be2f13565004","transcript_path":"/home/liam/.claude/projects/-home-liam-code-cctoast-wsl/9b19783a-56ac-4d8f-b111-be2f13565004.jsonl","cwd":"/home/liam/code/cctoast-wsl","hook_event_name":"SubagentStop","stop_hook_active":false}
