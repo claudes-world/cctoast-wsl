@@ -245,6 +245,119 @@ interface BurntToastInstaller {
 4. Create uninstall manifest
 5. Inject hook paths into settings
 
+### Path Conversion Caching System
+**Purpose**: Performance optimization for repeated WSL→Windows path conversions
+**Location**: `~/.cache/cctoast-wsl/path-cache.txt`
+**TTL**: 1 hour (3600 seconds)
+
+#### Caching Flow Diagram
+```mermaid
+flowchart TD
+    A[Path Conversion Request] --> B{Cache File Exists?}
+    B -->|No| C[Initialize Cache Directory]
+    C --> D[Call wslpath Command]
+    B -->|Yes| E{Path in Cache?}
+    E -->|No| F[Cache Miss]
+    F --> D[Call wslpath Command]
+    E -->|Yes| G{Cache Entry Valid?}
+    G -->|Expired| H[Cache Expired]
+    H --> D[Call wslpath Command]
+    G -->|Valid| I[Cache Hit - Return Cached Path]
+    D --> J{Conversion Success?}
+    J -->|Yes| K[Cache New Result]
+    K --> L[Return Converted Path]
+    J -->|No| M[Return Original Path]
+    I --> N[Performance: ~1ms]
+    L --> O[Performance: ~30-50ms]
+    M --> P[Fallback Mode]
+    
+    style I fill:#d4f8d4
+    style N fill:#d4f8d4
+    style O fill:#ffe6cc
+    style P fill:#ffcccc
+```
+
+#### Performance Characteristics
+- **Cache Hit**: ~1ms (reading from file)
+- **Cache Miss**: ~30-50ms (wslpath execution + caching)
+- **Target**: <100ms overall notification time
+- **Benefit**: 30-50x performance improvement for repeated paths
+
+#### Cache File Format
+```
+WSL_PATH|WINDOWS_PATH|UNIX_TIMESTAMP
+/home/user/icon.png|C:\Users\user\icon.png|1642583234
+/tmp/test.png|\\wsl.localhost\Ubuntu\tmp\test.png|1642583267
+```
+
+#### Cache Lifecycle
+1. **Initialization**: Create `~/.cache/cctoast-wsl/` on first use
+2. **Entry Creation**: Store successful path conversions with timestamp
+3. **Lookup**: Linear search through cache file for matching WSL path
+4. **Expiration**: Remove entries older than 1 hour during cleanup
+5. **Cleanup**: Automatic cleanup during cache writes (not reads)
+
+#### Cache Management Functions
+```bash
+# Cache initialization
+init_path_cache() -> creates cache directory if needed
+
+# Cache lookup (read-only, fast)
+get_cached_path(input_path) -> returns cached result or fails
+
+# Cache storage (write operation)
+cache_path(input_path, converted_path) -> stores with cleanup
+
+# Main interface (combines lookup + conversion + caching)
+convert_path_cached(input_path) -> optimized path conversion
+```
+
+#### Error Handling & Fallbacks
+- **Cache directory creation fails**: Continue without caching
+- **Cache file corruption**: Ignore corrupted entries, continue
+- **Cache write fails**: Continue without storing result
+- **wslpath fails**: Return original path, don't cache failure
+
+#### Common Cached Paths
+- **Default icon**: `~/.claude/cctoast-wsl/assets/claude.png` (every notification)
+- **Error log**: `~/.claude/cctoast-wsl/toast-error.log` (every notification)
+- **Custom images**: User-provided image paths (varies)
+
+#### Performance Impact
+```mermaid
+sequenceDiagram
+    participant S as Script
+    participant C as Cache
+    participant W as wslpath
+    participant P as PowerShell
+    
+    Note over S,P: First notification (cache miss)
+    S->>C: Check cache for default icon
+    C->>S: Cache miss
+    S->>W: wslpath conversion (~40ms)
+    W->>S: Windows path
+    S->>C: Store in cache
+    S->>P: Execute notification (~60ms total)
+    
+    Note over S,P: Second notification (cache hit)
+    S->>C: Check cache for default icon
+    C->>S: Cache hit (~1ms)
+    S->>P: Execute notification (~20ms total)
+```
+
+#### Debugging Cache Behavior
+```bash
+# View cache contents
+cat ~/.cache/cctoast-wsl/path-cache.txt
+
+# Clear cache for testing
+rm ~/.cache/cctoast-wsl/path-cache.txt
+
+# Debug cache operations
+CCTOAST_DEBUG=1 ./show-toast.sh --title "Test"
+# Shows: "DEBUG: Using cached path conversion" or "DEBUG: Cached path conversion"
+```
+
 ## Error Handling Strategy
 
 ### Hierarchical Error Recovery
