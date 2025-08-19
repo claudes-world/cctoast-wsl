@@ -359,17 +359,17 @@ function setupSignalHandlers(): void {
 }
 
 /**
- * Run dependency checks with user-friendly output
+ * Run dependency checks with user-friendly output and BurntToast auto-installation
  */
 async function runDependencyChecks(options: CliOptions): Promise<void> {
   const s = p.spinner();
   s.start('Checking system dependencies...');
-  if (!options.quiet) {
-    console.log('🔍 Checking system dependencies...\n');
-  }
-
+  
+  const autoInstaller = new BurntToastAutoInstaller({ quiet: options.quiet });
   const checker = new DependencyChecker(options.force);
-  const results = await checker.checkAll();
+  const results = await checker.checkAll(autoInstaller);
+  
+  s.stop();
   
   // Separate fatal and non-fatal failures
   const fatalFailures = results.filter(r => !r.passed && r.fatal);
@@ -378,46 +378,57 @@ async function runDependencyChecks(options: CliOptions): Promise<void> {
 
   // Display results
   if (!options.quiet) {
-    // Show passed checks
+    console.log('\n📊 Dependency Check Results:\n');
+    
+    // Show passed checks with green checkmarks
     passed.forEach(result => {
-      p.log.message(`${result.message}`, { symbol: color.cyan('✔') });
-
+      console.log(`${color.green('✓')} ${result.message}`);
     });
 
-    // Show warnings
+    // Show warnings with yellow warning symbols
     warnings.forEach(result => {
-      console.log(`⚠️  ${result.message}`);
+      console.log(`${color.yellow('⚠')} ${result.message}`);
       if (result.remedy) {
-        console.log(`   💡 ${result.remedy}`);
+        console.log(`   ${color.dim('💡 ' + result.remedy)}`);
+      }
+    });
+
+    // Show fatal failures with red X symbols
+    fatalFailures.forEach(result => {
+      console.log(`${color.red('✗')} ${result.message}`);
+      if (result.remedy) {
+        console.log(`   ${color.dim('🔧 ' + result.remedy)}`);
       }
     });
   }
 
-  // Handle fatal failures
-  if (fatalFailures.length > 0) {
-    if (!options.quiet) {
-      console.log('\n❌ Fatal dependency checks failed:\n');
+  // Handle BurntToast auto-installation
+  const burntToastFailure = fatalFailures.find(r => r.name === 'burnttoast-module');
+  if (burntToastFailure && !options.quiet) {
+    try {
+      // Get comprehensive installation status
+      const status = await autoInstaller.getInstallationStatus();
+      
+      if (!status.installed) {
+        console.log(`\n${color.cyan('🔔')} BurntToast PowerShell Module Required`);
+        console.log('BurntToast enables Windows toast notifications from WSL.');
+        console.log('Installation will be to your user profile only (no admin rights needed).\n');
 
-      fatalFailures.forEach(result => {
-        console.log(`   • ${result.message}`);
-        if (result.remedy) {
-          console.log(`     Fix: ${result.remedy}`);
+        // Show diagnostic information if there are connectivity or policy issues
+        if (!status.canConnect) {
+          console.log(`${color.yellow('⚠')} Cannot connect to PowerShell Gallery.`);
+          console.log('   This may be due to a corporate firewall or network issue.');
+          console.log('   Auto-installation may fail.\n');
         }
-      });
-    }
 
-    // Special handling for BurntToast - offer auto-install
-    const burntToastFailure = fatalFailures.find(
-      r => r.name === 'burnttoast-module'
-    );
-    if (burntToastFailure && !options.quiet) {
-      const autoInstaller = new BurntToastAutoInstaller();
+        if (status.executionPolicy.restrictive) {
+          console.log(`${color.yellow('⚠')} Restrictive PowerShell execution policy detected: ${status.executionPolicy.policy}`);
+          console.log('   Auto-installation will attempt to bypass this, but may fail.\n');
+        }
 
-      try {
-        console.log('\n🤖 Auto-installation available for BurntToast module');
+        // Prompt for consent
         const consent = await p.confirm({
-          message:
-            'Would you like to automatically install BurntToast PowerShell module?',
+          message: 'Attempt to install BurntToast module automatically?',
           initialValue: true,
         });
 
@@ -426,48 +437,80 @@ async function runDependencyChecks(options: CliOptions): Promise<void> {
         }
 
         if (consent) {
-          await autoInstaller.install();
+          // Run the installation
+          const installSpinner = p.spinner();
+          installSpinner.start('Installing BurntToast module...');
+          
+          try {
+            await autoInstaller.install();
+            installSpinner.stop('BurntToast installation completed');
 
-          // Verify installation
-          if (await autoInstaller.verify()) {
-            console.log(
-              '✅ BurntToast module installed and verified successfully'
-            );
+            // Verify the installation
+            const verifySpinner = p.spinner();
+            verifySpinner.start('Verifying BurntToast installation...');
+            
+            const verified = await autoInstaller.verify();
+            verifySpinner.stop();
 
-            // Remove BurntToast from fatal failures
-            const remainingFailures = fatalFailures.filter(
-              r => r.name !== 'burnttoast-module'
-            );
-            if (remainingFailures.length === 0) {
-              console.log('\n🎉 All dependency checks now pass!');
-              return;
+            if (verified) {
+              console.log(`${color.green('✅')} BurntToast module installed and verified successfully!`);
+              
+              // Remove BurntToast from fatal failures for the rest of the process
+              const remainingFailures = fatalFailures.filter(r => r.name !== 'burnttoast-module');
+              if (remainingFailures.length === 0) {
+                console.log(`\n${color.green('🎉')} All dependency checks now pass!`);
+                return;
+              }
+            } else {
+              throw new Error('Installation verification failed');
             }
-          } else {
-            console.log('❌ BurntToast installation verification failed');
+          } catch (error) {
+            installSpinner.stop();
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            console.log(`${color.red('❌')} Auto-installation failed: ${errorMessage}`);
+            
+            // Offer manual installation instructions
+            console.log('\n📝 Manual Installation Instructions:');
+            console.log(autoInstaller.getManualInstallInstructions());
+            
+            process.exit(ExitCodes.DEPENDENCY_FAILURE);
           }
+        } else {
+          // User declined auto-installation
+          console.log('\n📝 Manual Installation Required:');
+          console.log(autoInstaller.getManualInstallInstructions());
+          process.exit(ExitCodes.DEPENDENCY_FAILURE);
         }
-      } catch (error) {
-        console.log(
-          `❌ Auto-installation failed: ${error instanceof Error ? error.message : error}`
-        );
       }
-    }
-
-    if (
-      !options.force ||
-      fatalFailures.some(r => r.name === 'burnttoast-module')
-    ) {
-      console.log(
-        '\n💡 Use --force to bypass non-fatal checks, but BurntToast is required'
-      );
+    } catch (error) {
+      console.log(`${color.red('❌')} Error during BurntToast installation: ${error instanceof Error ? error.message : error}`);
       process.exit(ExitCodes.DEPENDENCY_FAILURE);
     }
   }
 
-  if (!options.quiet && warnings.length === 0 && fatalFailures.length === 0) {
-    console.log('\n🎉 All dependency checks passed!');
+  // Check remaining fatal failures
+  const remainingFatalFailures = fatalFailures.filter(r => r.name !== 'burnttoast-module');
+  if (remainingFatalFailures.length > 0) {
+    if (!options.quiet) {
+      console.log(`\n${color.red('❌')} Fatal dependency checks failed:`);
+      remainingFatalFailures.forEach(result => {
+        console.log(`   • ${result.message}`);
+        if (result.remedy) {
+          console.log(`     ${color.dim('Fix: ' + result.remedy)}`);
+        }
+      });
+    }
+
+    if (!options.force) {
+      console.log(`\n${color.dim('💡 Use --force to bypass non-critical checks (BurntToast is always required)')}`);
+      process.exit(ExitCodes.DEPENDENCY_FAILURE);
+    }
   }
-  s.stop();
+
+  // Success message
+  if (!options.quiet && warnings.length === 0 && fatalFailures.length === 0) {
+    console.log(`\n${color.green('🎉')} All dependency checks passed!`);
+  }
 }
 
 /**
@@ -528,8 +571,9 @@ async function main(): Promise<void> {
     // Run dependency checks (Milestone 3)
     if (options.json) {
       // For JSON output, run checks silently and include in output
+      const autoInstaller = new BurntToastAutoInstaller({ quiet: true });
       const checker = new DependencyChecker(options.force);
-      const depResults = await checker.checkAll();
+      const depResults = await checker.checkAll(autoInstaller);
 
       const result = {
         action: options.uninstall ? 'uninstall' : 'install',
