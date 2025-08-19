@@ -37,12 +37,12 @@ describe('BurntToast Auto-Installer', () => {
 
   describe('isInstalled', () => {
     it('should return true when BurntToast is installed', async () => {
-      mockExec.mockImplementation((command, options, callback) => {
-        if (typeof callback === 'function') {
-          callback(null, { stdout: 'BurntToast 0.8.5', stderr: '' } as any);
-        }
-        return {} as any;
-      });
+mockExec.mockImplementation((command, options, callback) => {
+  if (typeof callback === 'function') {
+    callback(null, 'BurntToast 0.8.5', '');
+  }
+  return {} as any;
+});
 
       const result = await installer.isInstalled();
       expect(result).toBe(true);
